@@ -63,57 +63,57 @@ useHead({ title: "YH Coffee — Menu" });
 
 <template>
   <div class="container">
-    <header style="text-align:center; padding: 20px 0;">
-      <h1 style="margin:0;">☕ YH Coffee</h1>
-      <p class="muted">Pesan di sini, ambil di kaunter</p>
+    <header class="hero">
+      <h1>YH Coffee</h1>
+      <p class="tagline">pesan sini, ambil kat kaunter ✨</p>
     </header>
 
-    <div v-if="result" class="card" style="flex-direction:column; text-align:center; padding:24px;">
-      <h2 style="margin:0 0 8px;">Order diterima!</h2>
-      <p style="font-size:28px; font-weight:700; margin:8px 0;">{{ result.orderNo }}</p>
-      <p>Total: <b>{{ rm(result.totalCents) }}</b> — bayar di kaunter</p>
-      <button class="btn" @click="result = null">Order lagi</button>
+    <div v-if="result" class="card" style="flex-direction:column; text-align:center; padding:32px 20px; border-color: rgba(126,231,135,0.4);">
+      <div style="font-size:40px;">🎉</div>
+      <h2 style="margin:8px 0 4px;">Order masuk!</h2>
+      <p style="font-family:'Space Grotesk'; font-size:32px; font-weight:700; color:var(--accent); margin:10px 0; letter-spacing:0.04em;">{{ result.orderNo }}</p>
+      <p class="muted">Total <b style="color:var(--text)">{{ rm(result.totalCents) }}</b> — bayar kat kaunter ya</p>
+      <button class="btn secondary" @click="result = null">Order lagi</button>
     </div>
 
     <template v-else>
-      <div v-for="cat in grouped" :key="cat.id" style="margin-bottom:24px;">
-        <h2 style="border-bottom:2px solid var(--brown); padding-bottom:4px;">{{ cat.name }}</h2>
+      <div v-for="cat in grouped" :key="cat.id">
+        <h2 class="cat">{{ cat.name }}</h2>
         <div v-for="item in cat.items" :key="item.id" class="card">
           <div style="flex:1;">
             <b>{{ item.name }}</b>
             <div v-if="item.description" class="muted">{{ item.description }}</div>
-            <div class="price">{{ rm(item.priceCents) }}</div>
+            <span class="price">{{ rm(item.priceCents) }}</span>
           </div>
           <div v-if="cart[item.id]" style="display:flex; align-items:center; gap:10px;">
-            <button class="btn secondary" style="padding:4px 12px;" @click="remove(item.id)">−</button>
-            <b>{{ cart[item.id] }}</b>
-            <button class="btn" style="padding:4px 12px;" @click="add(item.id)">+</button>
+            <button class="btn secondary pill-qty" @click="remove(item.id)">−</button>
+            <b style="min-width:18px; text-align:center;">{{ cart[item.id] }}</b>
+            <button class="btn pill-qty" @click="add(item.id)">+</button>
           </div>
-          <button v-else class="btn" @click="add(item.id)">+ Add</button>
+          <button v-else class="btn small" @click="add(item.id)">+ Add</button>
         </div>
       </div>
 
-      <div v-if="Object.keys(cart).length" class="card" style="flex-direction:column; position:sticky; bottom:12px; box-shadow:0 -2px 12px rgba(0,0,0,0.15);">
-        <h3 style="margin:0 0 8px;">Order summary</h3>
-        <div v-for="(qty, id) in cart" :key="id" style="display:flex; justify-content:space-between; width:100%; font-size:14px;">
+      <div v-if="Object.keys(cart).length" class="cartbar">
+        <h3 style="margin:0 0 10px;">🛒 Your order</h3>
+        <div v-for="(qty, id) in cart" :key="id" style="display:flex; justify-content:space-between; width:100%; font-size:14px; padding:2px 0;">
           <span>{{ qty }}× {{ items.find(i => i.id === Number(id))?.name }}</span>
           <span>{{ rm((items.find(i => i.id === Number(id))?.priceCents ?? 0) * qty) }}</span>
         </div>
-        <hr style="width:100%; border:0; border-top:1px solid #eee;">
-        <div style="display:flex; justify-content:space-between; width:100%; font-weight:700;">
-          <span>Total</span><span>{{ rm(total) }}</span>
+        <div style="display:flex; justify-content:space-between; width:100%; margin-top:10px; font-family:'Space Grotesk'; font-weight:700; font-size:18px;">
+          <span>Total</span><span style="color:var(--accent)">{{ rm(total) }}</span>
         </div>
-        <input v-model="customerName" placeholder="Nama (optional)" style="margin-top:10px;">
+        <input v-model="customerName" placeholder="Nama (optional)" style="margin-top:14px;">
         <input v-model="note" placeholder="Nota (kurang manis, dll)">
         <button class="btn" style="width:100%;" :disabled="submitting" @click="submitOrder">
-          {{ submitting ? "Menghantar..." : `Order — ${rm(total)}` }}
+          {{ submitting ? "hantar..." : `Order sekarang — ${rm(total)}` }}
         </button>
-        <p v-if="error" style="color:#a02030; font-size:14px;">{{ error }}</p>
+        <p v-if="error" style="color:var(--red); font-size:14px;">{{ error }}</p>
       </div>
     </template>
 
-    <footer style="text-align:center; padding:24px 0;" class="muted">
-      <NuxtLink to="/staff" style="color:#aaa;">Staff</NuxtLink>
+    <footer class="muted">
+      <NuxtLink to="/staff" style="color:#5c554c; font-size:12px;">staff login</NuxtLink>
     </footer>
   </div>
 </template>

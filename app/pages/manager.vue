@@ -42,28 +42,30 @@ useHead({ title: "YH Coffee — Manager" });
 
 <template>
   <div class="container">
-    <header style="display:flex; justify-content:space-between; align-items:center; padding:12px 0;">
-      <h1 style="margin:0; font-size:22px;">☕ Manager</h1>
-      <div>
-        <NuxtLink v-if="summary" to="/admin" class="btn secondary" style="font-size:14px;">Admin</NuxtLink>
-        <button class="btn secondary" style="font-size:14px;" @click="logout">Logout</button>
-      </div>
+    <header class="hero" style="padding:24px 0;">
+      <h1 style="font-size:2rem;">YH Coffee</h1>
+      <p class="tagline">manager mode</p>
     </header>
 
-    <div v-if="summary" style="display:flex; gap:10px; margin-bottom:16px;">
-      <div class="card" style="flex:1; flex-direction:column; align-items:center;">
-        <div class="muted">Paid today</div>
-        <b style="font-size:22px;">{{ rm(summary.today.revenue) }}</b>
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <NuxtLink to="/admin" class="btn secondary small" style="flex:1;">⚙️ Admin</NuxtLink>
+      <button class="btn secondary small" style="flex:1;" @click="logout">Log keluar</button>
+    </div>
+
+    <div v-if="summary" class="statgrid">
+      <div class="card">
+        <div class="muted">Terjual hari ni</div>
+        <b>{{ rm(summary.today.revenue) }}</b>
         <div class="muted">{{ summary.today.orders }} orders</div>
       </div>
-      <div class="card" style="flex:1; flex-direction:column; align-items:center;">
+      <div class="card">
         <div class="muted">Pending</div>
-        <b style="font-size:22px;">{{ summary.pendingCount }}</b>
+        <b>{{ summary.pendingCount }}</b>
         <div class="muted">orders</div>
       </div>
     </div>
 
-    <h2>Pending Orders</h2>
+    <h2 class="cat">Pending orders</h2>
     <p v-if="!orders.length" class="muted">No pending orders.</p>
     <div v-for="o in orders" :key="o.id" class="card" style="flex-direction:column; align-items:stretch;">
       <div style="display:flex; justify-content:space-between;">
@@ -82,13 +84,13 @@ useHead({ title: "YH Coffee — Manager" });
       </div>
       <div v-if="o.note" class="muted" style="margin-bottom:6px;">Nota: {{ o.note }}</div>
       <div style="display:flex; gap:8px;">
-        <button class="btn" style="flex:1;" @click="setStatus(o, 'paid')">✓ Paid</button>
-        <NuxtLink :to="`/receipt/${o.orderNo}`" class="btn secondary" style="text-align:center;">🖨</NuxtLink>
-        <button class="btn secondary" @click="setStatus(o, 'cancelled')">✗ Cancel</button>
+        <button class="btn small" style="flex:1;" @click="setStatus(o, 'paid')">✓ Paid</button>
+        <NuxtLink :to="`/receipt/${o.orderNo}`" class="btn secondary small">🖨</NuxtLink>
+        <button class="btn secondary small" @click="setStatus(o, 'cancelled')">✗</button>
       </div>
     </div>
 
-    <h2>Menu Availability</h2>
+    <h2 class="cat">Menu availability</h2>
     <div v-for="item in summary?.items ?? []" :key="item.id" class="card">
       <div>
         <b>{{ item.name }}</b>

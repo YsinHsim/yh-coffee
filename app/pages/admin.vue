@@ -79,16 +79,17 @@ useHead({ title: "YH Coffee — Admin" });
 
 <template>
   <div class="container" style="max-width:760px;">
-    <header style="display:flex; justify-content:space-between; align-items:center; padding:12px 0;">
-      <h1 style="margin:0; font-size:22px;">☕ Admin</h1>
-      <div>
-        <NuxtLink to="/manager" class="btn secondary" style="font-size:14px;">Manager</NuxtLink>
-        <button class="btn secondary" style="font-size:14px;" @click="logout">Logout</button>
-      </div>
+    <header class="hero" style="padding:24px 0;">
+      <h1 style="font-size:2rem;">YH Coffee</h1>
+      <p class="tagline">admin mode</p>
     </header>
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <NuxtLink to="/manager" class="btn secondary small" style="flex:1;">📋 Manager</NuxtLink>
+      <button class="btn secondary small" style="flex:1;" @click="logout">Log keluar</button>
+    </div>
 
     <!-- Categories -->
-    <h2>Categories</h2>
+    <h2 class="cat">Categories</h2>
     <div v-for="c in data?.categories ?? []" :key="c.id" class="card">
       <b>{{ c.name }}</b>
       <button class="btn secondary" style="font-size:13px; padding:6px 12px;" @click="deleteCategory(c.id)">Delete</button>
@@ -99,7 +100,7 @@ useHead({ title: "YH Coffee — Admin" });
     </div>
 
     <!-- Items -->
-    <h2>Items</h2>
+    <h2 class="cat">Items</h2>
     <div v-for="item in data?.items ?? []" :key="item.id" class="card">
       <div style="flex:1;">
         <b>{{ item.name }}</b>
@@ -129,7 +130,7 @@ useHead({ title: "YH Coffee — Admin" });
     </div>
 
     <!-- Users -->
-    <h2 style="margin-top:32px;">Users</h2>
+    <h2 class="cat" style="margin-top:32px;">Users</h2>
     <div v-for="u in data?.users ?? []" :key="u.id" class="card">
       <div><b>{{ u.username }}</b> <span class="muted">{{ u.role }}</span></div>
       <button class="btn secondary" style="font-size:13px; padding:6px 12px;" @click="deleteUser(u.id)">Remove</button>
