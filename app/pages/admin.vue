@@ -92,11 +92,11 @@ useHead({ title: "YH Coffee — Admin" });
     <h2 class="cat">Categories</h2>
     <div v-for="c in data?.categories ?? []" :key="c.id" class="card">
       <b>{{ c.name }}</b>
-      <button class="btn secondary" style="font-size:13px; padding:6px 12px;" @click="deleteCategory(c.id)">Delete</button>
+      <button class="btn secondary small" @click="deleteCategory(c.id)">Delete</button>
     </div>
-    <div style="display:flex; gap:8px; margin-bottom:24px;">
-      <input v-model="catName" placeholder="New category name" style="margin:0;">
-      <button class="btn" style="white-space:nowrap;" @click="addCategory">Add</button>
+    <div class="inline-form" style="margin-bottom:24px;">
+      <input v-model="catName" placeholder="New category name">
+      <button class="btn" @click="addCategory">Add</button>
     </div>
 
     <!-- Items -->
@@ -109,19 +109,21 @@ useHead({ title: "YH Coffee — Admin" });
           · {{ rm(item.priceCents) }} · {{ item.available ? "available" : "sold out" }}
         </div>
       </div>
-      <button class="btn secondary" style="font-size:13px; padding:6px 12px;" @click="patchItem(item.id, { available: !item.available })">
-        {{ item.available ? "Hide" : "Show" }}
-      </button>
-      <button class="btn secondary" style="font-size:13px; padding:6px 12px;" @click="deleteItem(item.id)">Del</button>
+      <div class="row-actions">
+        <button class="btn secondary small" @click="patchItem(item.id, { available: !item.available })">
+          {{ item.available ? "Hide" : "Show" }}
+        </button>
+        <button class="btn secondary small" @click="deleteItem(item.id)">Del</button>
+      </div>
     </div>
 
     <div class="card" style="flex-direction:column; align-items:stretch; margin-top:12px;">
       <b style="margin-bottom:8px;">Add item</b>
       <input v-model="form.name" placeholder="Name">
       <input v-model="form.description" placeholder="Description (optional)">
-      <div style="display:flex; gap:8px;">
-        <input v-model="form.price" type="number" step="0.05" placeholder="Price RM" style="margin:0;">
-        <select v-model="form.categoryId" style="margin:0;">
+      <div class="inline-form">
+        <input v-model="form.price" type="number" inputmode="decimal" step="0.05" placeholder="Price RM">
+        <select v-model="form.categoryId">
           <option value="">No category</option>
           <option v-for="c in data?.categories" :key="c.id" :value="c.id">{{ c.name }}</option>
         </select>
@@ -133,7 +135,7 @@ useHead({ title: "YH Coffee — Admin" });
     <h2 class="cat" style="margin-top:32px;">Users</h2>
     <div v-for="u in data?.users ?? []" :key="u.id" class="card">
       <div><b>{{ u.username }}</b> <span class="muted">{{ u.role }}</span></div>
-      <button class="btn secondary" style="font-size:13px; padding:6px 12px;" @click="deleteUser(u.id)">Remove</button>
+      <button class="btn secondary small" @click="deleteUser(u.id)">Remove</button>
     </div>
     <div class="card" style="flex-direction:column; align-items:stretch; margin-top:12px;">
       <b style="margin-bottom:8px;">Add user</b>

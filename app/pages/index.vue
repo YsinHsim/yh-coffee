@@ -7,19 +7,28 @@ const cart = useState<Record<number, number>>("cart", () => ({}));
 const { data } = await useFetch<{ categories: Category[]; items: MenuItem[] }>("/api/menu");
 const categories = computed(() => data.value?.categories ?? []);
 const items = computed(() => data.value?.items ?? []);
+const itemById = (id: number | string) => items.value.find((i) => i.id === Number(id));
 
 const total = computed(() =>
-  Object.entries(cart.value).reduce((sum, [id, qty]) => {
-    const item = items.value.find((i) => i.id === Number(id));
-    return sum + (item ? item.priceCents * qty : 0);
-  }, 0),
+  Object.entries(cart.value).reduce((sum, [id, qty]) => sum + (itemById(id)?.priceCents ?? 0) * qty, 0),
 );
+const count = computed(() => Object.values(cart.value).reduce((a, b) => a + b, 0));
 
 const grouped = computed(() =>
   categories.value
     .map((c) => ({ ...c, items: items.value.filter((i) => i.categoryId === c.id) }))
     .filter((c) => c.items.length > 0),
 );
+
+// Emoji stand-in until items have photos (imageUrl).
+function emojiFor(item: MenuItem) {
+  const n = `${categories.value.find((c) => c.id === item.categoryId)?.name ?? ""} ${item.name}`.toLowerCase();
+  if (n.includes("teh")) return "🍵";
+  if (n.includes("roti") || n.includes("toast")) return "🍞";
+  if (n.includes("nasi") || n.includes("makan") || n.includes("mee")) return "🍛";
+  if (n.includes("kek") || n.includes("cake")) return "🍰";
+  return "☕";
+}
 
 function add(id: number) {
   cart.value = { ...cart.value, [id]: (cart.value[id] ?? 0) + 1 };
@@ -30,6 +39,36 @@ function remove(id: number) {
   next[id]--; if (next[id] === 0) delete next[id];
   cart.value = next;
 }
+
+// Cart lives in a bottom sheet with its own scroll area, so the page
+// underneath never gets covered by a growing sticky panel.
+const sheetOpen = ref(false);
+watch(sheetOpen, (open) => {
+  if (import.meta.client) document.body.classList.toggle("locked", open);
+});
+watch(count, (n) => { if (n === 0) sheetOpen.value = false; });
+function onKey(e: KeyboardEvent) { if (e.key === "Escape") sheetOpen.value = false; }
+
+// Highlight the category chip for the section in view.
+const activeCat = ref<number | null>(null);
+let observer: IntersectionObserver | undefined;
+onMounted(() => {
+  window.addEventListener("keydown", onKey);
+  observer = new IntersectionObserver(
+    (entries) => {
+      const hit = entries.find((e) => e.isIntersecting);
+      if (hit) activeCat.value = Number((hit.target as HTMLElement).dataset.cat);
+    },
+    { rootMargin: "-80px 0px -70% 0px" },
+  );
+  document.querySelectorAll<HTMLElement>(".menu-section").forEach((el) => observer!.observe(el));
+  activeCat.value = grouped.value[0]?.id ?? null;
+});
+onUnmounted(() => {
+  window.removeEventListener("keydown", onKey);
+  observer?.disconnect();
+  document.body.classList.remove("locked");
+});
 
 const customerName = ref("");
 const note = ref("");
@@ -50,6 +89,8 @@ async function submitOrder() {
       },
     });
     cart.value = {};
+    sheetOpen.value = false;
+    window.scrollTo({ top: 0 });
   } catch (e: any) {
     error.value = e?.data?.statusMessage ?? "Failed to submit order";
   } finally {
@@ -62,58 +103,98 @@ useHead({ title: "YH Coffee — Menu" });
 </script>
 
 <template>
-  <div class="container">
-    <header class="hero">
+  <div class="container" style="padding-top:0;">
+    <header class="hero" style="padding:32px 0 20px;">
       <h1>YH Coffee</h1>
       <p class="tagline">pesan sini, ambil kat kaunter ✨</p>
     </header>
 
-    <div v-if="result" class="card" style="flex-direction:column; text-align:center; padding:32px 20px; border-color: rgba(126,231,135,0.4);">
-      <div style="font-size:40px;">🎉</div>
-      <h2 style="margin:8px 0 4px;">Order masuk!</h2>
-      <p style="font-family:'Space Grotesk'; font-size:32px; font-weight:700; color:var(--accent); margin:10px 0; letter-spacing:0.04em;">{{ result.orderNo }}</p>
-      <p class="muted">Total <b style="color:var(--text)">{{ rm(result.totalCents) }}</b> — bayar kat kaunter ya</p>
+    <div v-if="result" class="card stack success">
+      <div style="font-size:44px;">🎉</div>
+      <h2 style="margin:6px 0 0;">Order masuk!</h2>
+      <p class="muted" style="margin:6px 0 0;">Nombor order anda</p>
+      <p class="order-no">{{ result.orderNo }}</p>
+      <p class="muted" style="margin:0 0 18px;">Total <b style="color:var(--text)">{{ rm(result.totalCents) }}</b> — bayar kat kaunter ya</p>
       <button class="btn secondary" @click="result = null">Order lagi</button>
     </div>
 
     <template v-else>
-      <div v-for="cat in grouped" :key="cat.id">
-        <h2 class="cat">{{ cat.name }}</h2>
-        <div v-for="item in cat.items" :key="item.id" class="card">
-          <div style="flex:1;">
-            <b>{{ item.name }}</b>
-            <div v-if="item.description" class="muted">{{ item.description }}</div>
-            <span class="price">{{ rm(item.priceCents) }}</span>
-          </div>
-          <div v-if="cart[item.id]" style="display:flex; align-items:center; gap:10px;">
-            <button class="btn secondary pill-qty" @click="remove(item.id)">−</button>
-            <b style="min-width:18px; text-align:center;">{{ cart[item.id] }}</b>
-            <button class="btn pill-qty" @click="add(item.id)">+</button>
-          </div>
-          <button v-else class="btn small" @click="add(item.id)">+ Add</button>
+      <nav class="topbar">
+        <div class="chips">
+          <a
+            v-for="cat in grouped" :key="cat.id"
+            :href="`#cat-${cat.id}`" class="chip" :class="{ active: activeCat === cat.id }"
+            @click="activeCat = cat.id"
+          >{{ cat.name }}</a>
         </div>
-      </div>
+      </nav>
 
-      <div v-if="Object.keys(cart).length" class="cartbar">
-        <h3 style="margin:0 0 10px;">🛒 Your order</h3>
-        <div v-for="(qty, id) in cart" :key="id" style="display:flex; justify-content:space-between; width:100%; font-size:14px; padding:2px 0;">
-          <span>{{ qty }}× {{ items.find(i => i.id === Number(id))?.name }}</span>
-          <span>{{ rm((items.find(i => i.id === Number(id))?.priceCents ?? 0) * qty) }}</span>
+      <section v-for="cat in grouped" :id="`cat-${cat.id}`" :key="cat.id" :data-cat="cat.id" class="menu-section">
+        <h2 class="cat">{{ cat.name }}</h2>
+        <div v-for="item in cat.items" :key="item.id" class="item" :class="{ 'in-cart': cart[item.id] }">
+          <div class="thumb">
+            <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.name" loading="lazy">
+            <span v-else aria-hidden="true">{{ emojiFor(item) }}</span>
+          </div>
+          <div class="item-body">
+            <b>{{ item.name }}</b>
+            <span v-if="item.description" class="muted">{{ item.description }}</span>
+            <div class="item-foot">
+              <span class="price">{{ rm(item.priceCents) }}</span>
+              <div v-if="cart[item.id]" class="stepper">
+                <button class="icon-btn ghost" :aria-label="`Kurang ${item.name}`" @click="remove(item.id)">−</button>
+                <b>{{ cart[item.id] }}</b>
+                <button class="icon-btn" :aria-label="`Tambah ${item.name}`" @click="add(item.id)">+</button>
+              </div>
+              <button v-else class="icon-btn" :aria-label="`Tambah ${item.name}`" @click="add(item.id)">+</button>
+            </div>
+          </div>
         </div>
-        <div style="display:flex; justify-content:space-between; width:100%; margin-top:10px; font-family:'Space Grotesk'; font-weight:700; font-size:18px;">
-          <span>Total</span><span style="color:var(--accent)">{{ rm(total) }}</span>
-        </div>
-        <input v-model="customerName" placeholder="Nama (optional)" style="margin-top:14px;">
-        <input v-model="note" placeholder="Nota (kurang manis, dll)">
-        <button class="btn" style="width:100%;" :disabled="submitting" @click="submitOrder">
-          {{ submitting ? "hantar..." : `Order sekarang — ${rm(total)}` }}
-        </button>
-        <p v-if="error" style="color:var(--red); font-size:14px;">{{ error }}</p>
-      </div>
+      </section>
+
+      <div v-if="count" class="fab-space" />
+      <button v-if="count && !sheetOpen" class="cart-fab" @click="sheetOpen = true">
+        <span><span class="count">{{ count }}</span>{{ rm(total) }}</span>
+        <span class="go">Lihat order →</span>
+      </button>
     </template>
 
     <footer class="muted">
-      <NuxtLink to="/staff" style="color:#5c554c; font-size:12px;">staff login</NuxtLink>
+      <NuxtLink to="/staff" style="color:var(--faint); font-size:12px;">staff login</NuxtLink>
     </footer>
+
+    <Teleport to="body">
+      <div v-if="sheetOpen" class="overlay" @click.self="sheetOpen = false">
+        <div class="sheet" role="dialog" aria-modal="true" aria-label="Your order">
+          <div class="handle" />
+          <div class="sheet-head">
+            <h3>Order anda</h3>
+            <button class="icon-btn ghost" aria-label="Tutup" @click="sheetOpen = false">×</button>
+          </div>
+          <div class="sheet-body">
+            <div v-for="(qty, id) in cart" :key="id" class="line">
+              <div class="name">
+                <b>{{ itemById(id)?.name }}</b>
+                <div class="muted">{{ rm((itemById(id)?.priceCents ?? 0) * qty) }}</div>
+              </div>
+              <div class="stepper">
+                <button class="icon-btn ghost" aria-label="Kurang" @click="remove(Number(id))">−</button>
+                <b>{{ qty }}</b>
+                <button class="icon-btn" aria-label="Tambah" @click="add(Number(id))">+</button>
+              </div>
+            </div>
+            <input v-model="customerName" placeholder="Nama (optional)" autocomplete="given-name" style="margin-top:14px;">
+            <input v-model="note" placeholder="Nota (kurang manis, dll)">
+          </div>
+          <div class="sheet-foot">
+            <div class="total-row"><span>Total</span><span>{{ rm(total) }}</span></div>
+            <button class="btn block" :disabled="submitting" @click="submitOrder">
+              {{ submitting ? "hantar..." : "Order sekarang" }}
+            </button>
+            <p v-if="error" style="color:var(--red); font-size:14px; margin:10px 0 0;">{{ error }}</p>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

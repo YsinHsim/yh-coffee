@@ -96,7 +96,7 @@ useHead({ title: "YH Coffee — Manager" });
         <b>{{ item.name }}</b>
         <div class="muted">{{ item.categoryName ?? "Uncategorised" }} · {{ rm(item.priceCents) }}</div>
       </div>
-      <button class="btn" :class="{ secondary: !item.available }" style="font-size:13px; padding:6px 12px;" @click="toggleAvailable(item)">
+      <button class="btn small" :class="{ secondary: !item.available }" @click="toggleAvailable(item)">
         {{ item.available ? "Available" : "Sold out" }}
       </button>
     </div>

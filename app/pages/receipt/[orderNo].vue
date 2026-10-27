@@ -49,16 +49,10 @@ useHead({ title: "YH Coffee — Receipt" });
       <div v-if="order.note" class="muted">Nota: {{ order.note }}</div>
       <div style="text-align:center; margin-top:24px;" class="muted">Terima kasih! 🙏</div>
     </div>
-    <div style="text-align:center; margin-top:16px; print:hidden;">
+    <div class="no-print" style="display:flex; gap:8px; justify-content:center; margin-top:16px;">
       <button class="btn" @click="doPrint">🖨 Print</button>
       <NuxtLink to="/manager" class="btn secondary">Back</NuxtLink>
     </div>
   </div>
 </template>
 
-<style>
-@media print {
-  body { background: #fff; }
-  .container { max-width: 80mm; }
-}
-</style>
