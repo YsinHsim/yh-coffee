@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
     const [cats, items, users] = await Promise.all([
       db.select().from(schema.categories).orderBy(asc(schema.categories.sort)),
       db.select().from(schema.items).orderBy(asc(schema.items.sort), asc(schema.items.id)),
-      db.select({ id: schema.users.id, username: schema.users.username, role: schema.users.role }).from(schema.users),
+      db.select({ id: schema.users.id, username: schema.users.username, role: schema.users.role, active: schema.users.active }).from(schema.users),
     ]);
     return { categories: cats, items, users };
   }

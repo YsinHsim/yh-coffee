@@ -1,4 +1,9 @@
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event);
-  return session.user ?? null;
+  if (!session.user) return null;
+  try {
+    return await requireAuth(event, ["manager", "admin"]);
+  } catch {
+    return null;
+  }
 });

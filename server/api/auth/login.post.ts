@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   const [user] = await db
     .select()
     .from(schema.users)
-    .where(eq(schema.users.username, String(username)))
+    .where(and(eq(schema.users.username, String(username)), eq(schema.users.active, true)))
     .limit(1);
 
   if (!user || !(await verifyPassword(user.passwordHash, password)))

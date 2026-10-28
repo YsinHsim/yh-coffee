@@ -1,17 +1,24 @@
 import { createError } from "h3";
 import type { H3Event } from "h3";
-import type { UserSession } from "#auth-utils";
+import { eq } from "drizzle-orm";
+import { scryptSync, randomBytes, timingSafeEqual } from "node:crypto";
+
+interface SessionUser {
+  id: number;
+}
 
 export async function requireAuth(event: H3Event, roles: string[]) {
   const session = await getUserSession(event);
-  const user = session?.user as UserSession["user"] & { id?: number; role?: string } | undefined;
-  const u = user as { id: number; role: string } | undefined;
-  if (!u?.id) throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
-  if (!roles.includes(u.role)) throw createError({ statusCode: 403, statusMessage: "Forbidden" });
-  return u;
-}
+  const sessionUser = session?.user as SessionUser | undefined;
+  if (!sessionUser?.id) throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
 
-import { scryptSync, randomBytes, timingSafeEqual } from "node:crypto";
+  const [user] = await db.select().from(schema.users).where(eq(schema.users.id, sessionUser.id)).limit(1);
+  if (!user?.active || !roles.includes(user.role)) {
+    await clearUserSession(event);
+    throw createError({ statusCode: 401, statusMessage: "Your staff access has ended. Please log in again." });
+  }
+  return { id: user.id, username: user.username, role: user.role };
+}
 
 export function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");

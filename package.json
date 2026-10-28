@@ -7,7 +7,9 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test:phase1": "tsx scripts/test-phase1.ts",
+    "test:phase2": "tsx scripts/test-phase2.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.2.0",
@@ -18,10 +20,12 @@
     "nuxt-auth-utils": "^0.5.32",
     "vue": "^3.5.44",
     "vue-router": "^5.4.0",
+    "ws": "^8.22.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "@types/ws": "^8.18.2",
     "typescript": "5.9",
     "vue-tsc": "^3.3.13"
   }

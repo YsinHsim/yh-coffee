@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 export default defineEventHandler(async (event) => {
   const actor = await requireAuth(event, ["admin"]);
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     const [target] = await db.select().from(schema.users).where(eq(schema.users.id, id)).limit(1);
     if (!target) throw createError({ statusCode: 404, statusMessage: "User not found" });
     if (target.role === "admin") {
-      const [admins] = await db.select({ count: sql<number>`count(*)::int` }).from(schema.users).where(eq(schema.users.role, "admin"));
+      const [admins] = await db.select({ count: sql<number>`count(*)::int` }).from(schema.users).where(and(eq(schema.users.role, "admin"), eq(schema.users.active, true)));
       if ((admins?.count ?? 0) <= 1)
         throw createError({ statusCode: 400, statusMessage: "Cannot remove the last admin" });
     }

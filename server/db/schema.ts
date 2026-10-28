@@ -26,6 +26,8 @@ export const orders = pgTable(
     note: text("note").notNull().default(""),
     totalCents: integer("total_cents").notNull().default(0),
     status: text("status").notNull().default("pending"), // pending | preparing | ready | paid | cancelled
+    paymentMethod: text("payment_method"), // cash | qr | card | other
+    paidAt: timestamp("paid_at", { withTimezone: true }),
     trackToken: text("track_token").notNull().unique(), // private customer tracking link
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -48,7 +50,31 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("manager"), // manager | admin
+  active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const orderEvents = pgTable("order_events", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  actorId: integer("actor_id").references(() => users.id, { onDelete: "set null" }),
+  actorName: text("actor_name").notNull(),
+  fromStatus: text("from_status"),
+  toStatus: text("to_status").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const orderCounters = pgTable("order_counters", {
+  day: text("day").primaryKey(), // YYYY-MM-DD in Asia/Kuala_Lumpur
+  nextNumber: integer("next_number").notNull().default(1),
+});
+
+export const shop = pgTable("shop", {
+  id: integer("id").primaryKey().default(1),
+  acceptingOrders: boolean("accepting_orders").notNull().default(true),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const settings = pgTable("settings", {

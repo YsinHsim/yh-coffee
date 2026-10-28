@@ -2,7 +2,7 @@ import { asc, eq } from "drizzle-orm";
 
 // Public menu: only available items, grouped client-side by category
 export default defineEventHandler(async () => {
-  const [cats, menuItems] = await Promise.all([
+  const [cats, menuItems, state] = await Promise.all([
     db.select().from(schema.categories).orderBy(asc(schema.categories.sort), asc(schema.categories.id)),
     db
       .select({
@@ -16,6 +16,7 @@ export default defineEventHandler(async () => {
       .from(schema.items)
       .where(eq(schema.items.available, true))
       .orderBy(asc(schema.items.sort), asc(schema.items.id)),
+    getShopState(),
   ]);
-  return { categories: cats, items: menuItems };
+  return { categories: cats, items: menuItems, acceptingOrders: state.acceptingOrders };
 });

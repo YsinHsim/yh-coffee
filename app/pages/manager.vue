@@ -6,12 +6,13 @@ definePageMeta({ middleware: "staff-only" });
 interface OrderLine { nameSnapshot: string; qty: number; priceCents: number }
 interface Order {
   id: number; orderNo: string; customerName: string; note: string;
-  totalCents: number; status: string; lines: OrderLine[];
+  totalCents: number; status: string; paymentMethod: string | null; paidAt: string | null; lines: OrderLine[];
 }
 interface Summary {
   today: { orders: number; revenue: number };
   pendingCount: number;
   items: { id: number; name: string; priceCents: number; available: boolean; categoryName: string | null }[];
+  acceptingOrders: boolean;
 }
 
 const { user } = useUserSession();
@@ -24,10 +25,13 @@ const loading = ref(true);
 const refreshing = ref(false);
 const updating = ref<number | null>(null);
 const updatingItem = ref<number | null>(null);
+const updatingShop = ref(false);
 const actionError = ref("");
 const rm = (c: number) => `RM${(c / 100).toFixed(2)}`;
 const activeOrders = computed(() => orders.value.filter((o) => o.status !== "paid" && o.status !== "cancelled"));
 const paidOrders = computed(() => orders.value.filter((o) => o.status === "paid"));
+const paymentMethods = [{ value: "cash", label: "Cash" }, { value: "qr", label: "QR" }, { value: "card", label: "Card" }, { value: "other", label: "Other" }];
+const paymentChoice = ref<Record<number, string>>({});
 
 async function refresh() {
   refreshing.value = true;
@@ -52,13 +56,15 @@ onMounted(() => {
 });
 
 async function setStatus(order: Order, status: string) {
+  const paymentMethod = status === "paid" ? paymentChoice.value[order.id] ?? "cash" : undefined;
   updating.value = order.id;
   actionError.value = "";
   try {
-    await $fetch(`/api/manager/orders/${order.id}/status`, { method: "POST", body: { status } });
+    await $fetch(`/api/manager/orders/${order.id}/status`, { method: "POST", body: { status, paymentMethod } });
     await refresh();
-  } catch {
-    actionError.value = "Could not update order. Please try again.";
+  } catch (e: any) {
+    actionError.value = e?.data?.statusMessage ?? "Could not update order. Please try again.";
+    await refresh();
   } finally {
     updating.value = null;
   }
@@ -75,6 +81,24 @@ async function toggleAvailable(item: { id: number; available: boolean }) {
     updatingItem.value = null;
   }
 }
+async function toggleShop() {
+  if (!summary.value) return;
+  const closing = summary.value.acceptingOrders;
+  if (closing && !confirm("Close the store to new customer orders? All active orders must already be completed or cancelled.")) return;
+  updatingShop.value = true;
+  actionError.value = "";
+  try {
+    const state = await $fetch<{ acceptingOrders: boolean }>("/api/manager/shop", {
+      method: "PATCH",
+      body: { acceptingOrders: !closing },
+    });
+    summary.value.acceptingOrders = state.acceptingOrders;
+  } catch (e: any) {
+    actionError.value = e?.data?.statusMessage ?? "Could not update store status.";
+  } finally {
+    updatingShop.value = false;
+  }
+}
 async function logout() {
   await $fetch("/api/auth/logout", { method: "POST" });
   await navigateTo("/staff");
@@ -89,7 +113,12 @@ useHead({ title: "YH Coffee — Staff" });
         <span class="staff-kicker">YH COFFEE / STAFF</span>
         <h1>{{ tab === "orders" ? "Current orders" : tab === "menu" ? "Menu availability" : "Today's sales" }}</h1>
       </div>
-      <NButton size="small" secondary @click="logout">Log out</NButton>
+      <div class="row-actions">
+        <NButton v-if="summary" size="small" :type="summary.acceptingOrders ? 'error' : 'primary'" secondary :loading="updatingShop" @click="toggleShop">
+          {{ summary.acceptingOrders ? "Close store" : "Open store" }}
+        </NButton>
+        <NButton size="small" secondary @click="logout">Log out</NButton>
+      </div>
     </header>
 
     <nav class="staff-tabs" aria-label="Staff navigation">
@@ -99,6 +128,7 @@ useHead({ title: "YH Coffee — Staff" });
       <NuxtLink v-if="isAdmin" to="/admin">Admin ↗</NuxtLink>
     </nav>
 
+    <p class="staff-help"><b>{{ summary?.acceptingOrders ? "Store open" : "Store closed" }}</b> · {{ summary?.acceptingOrders ? "Customers can submit new orders." : "New customer orders are blocked." }}</p>
     <p v-if="actionError" class="staff-error">{{ actionError }} <button @click="refresh">Retry</button></p>
     <div v-if="loading" class="loading-state" role="status">
       <NSpin size="large" />
@@ -133,9 +163,14 @@ useHead({ title: "YH Coffee — Staff" });
         <p v-if="o.note" class="order-note"><b>Note:</b> {{ o.note }}</p>
         <div class="order-total"><span>Total</span><b>{{ rm(o.totalCents) }}</b></div>
         <div class="order-actions">
+          <label class="payment-choice">Payment
+            <select v-model="paymentChoice[o.id]" aria-label="Payment method">
+              <option v-for="method in paymentMethods" :key="method.value" :value="method.value">{{ method.label }}</option>
+            </select>
+          </label>
           <NButton v-if="o.status === 'pending'" type="primary" block :loading="updating === o.id" @click="setStatus(o, 'preparing')">Start preparing →</NButton>
           <NButton v-else-if="o.status === 'preparing'" type="primary" block :loading="updating === o.id" @click="setStatus(o, 'ready')">Ready for pickup ✓</NButton>
-          <NButton v-else type="primary" block :loading="updating === o.id" @click="setStatus(o, 'paid')">Complete & mark paid ✓</NButton>
+          <NButton v-else type="primary" block :loading="updating === o.id" @click="setStatus(o, 'paid')">Complete & record payment ✓</NButton>
           <div class="secondary-actions">
           <NButton v-if="o.status !== 'ready'" size="small" secondary @click="setStatus(o, 'paid')">Mark paid</NButton>
           <NButton size="small" secondary tag="a" :href="`/receipt/${o.orderNo}`">Receipt</NButton>
@@ -163,10 +198,11 @@ useHead({ title: "YH Coffee — Staff" });
         <div class="card"><div class="muted">Revenue today</div><b>{{ rm(summary.today.revenue) }}</b><div class="muted">counter payments</div></div>
         <div class="card"><div class="muted">Paid orders</div><b>{{ summary.today.orders }}</b><div class="muted">today</div></div>
       </div>
-      <div class="section-title"><h2>Completed orders</h2><span class="muted">Latest first</span></div>
+      <NuxtLink to="/closing" class="btn secondary block">Daily closing report →</NuxtLink>
+      <div class="section-title"><h2>Recent completed orders</h2><span class="muted">Latest first</span></div>
       <p v-if="!paidOrders.length" class="muted">No completed orders yet.</p>
       <div v-for="o in paidOrders" :key="o.id" class="card">
-        <div><b>{{ o.orderNo }}</b><div class="muted">{{ o.customerName || "Counter customer" }}</div></div>
+        <div><b>{{ o.orderNo }}</b><div class="muted">{{ o.customerName || "Counter customer" }} · {{ o.paymentMethod }}</div></div>
         <div class="sale-amount"><b>{{ rm(o.totalCents) }}</b><NuxtLink :to="`/receipt/${o.orderNo}`" class="muted">Receipt</NuxtLink></div>
       </div>
     </main>

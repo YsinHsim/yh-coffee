@@ -3,7 +3,7 @@ definePageMeta({ middleware: "staff-only" });
 
 interface Item { id: number; categoryId: number | null; name: string; description: string; priceCents: number; available: boolean; imageUrl: string | null }
 interface Category { id: number; name: string; sort: number }
-interface User { id: number; username: string; role: string }
+interface User { id: number; username: string; role: string; active: boolean }
 interface Data { categories: Category[]; items: Item[]; users: User[] }
 
 const data = ref<Data | undefined>(undefined);
@@ -66,6 +66,17 @@ async function addUser() {
   await refresh();
 }
 const actionError = ref("");
+
+async function toggleUser(user: User) {
+  if (user.active && !confirm(`Deactivate “${user.username}”? Their existing sessions will stop working immediately.`)) return;
+  actionError.value = "";
+  try {
+    await $fetch(`/api/admin/users/${user.id}/status`, { method: "PATCH", body: { active: !user.active } });
+    await refresh();
+  } catch (e: any) {
+    actionError.value = e?.data?.statusMessage ?? "Could not update user";
+  }
+}
 
 async function deleteUser(id: number) {
   const target = data.value?.users.find((u) => u.id === id);
@@ -149,11 +160,14 @@ useHead({ title: "YH Coffee — Admin" });
 
     <!-- Users -->
     <h2 class="cat" style="margin-top:32px;">Users</h2>
-    <p class="muted">Removing a user is permanent. You cannot remove yourself or the last admin.</p>
+    <p class="muted">Deactivating an employee immediately revokes their sessions and preserves their account history. Permanent removal is only needed for accounts with no audit history.</p>
     <p v-if="actionError" class="staff-error">{{ actionError }}</p>
     <div v-for="u in data?.users ?? []" :key="u.id" class="card">
-      <div><b>{{ u.username }}</b> <span class="muted">{{ u.role }}</span></div>
-      <button class="btn secondary small" @click="deleteUser(u.id)">Remove</button>
+      <div><b>{{ u.username }}</b> <span class="muted">{{ u.role }} · {{ u.active ? "active" : "deactivated" }}</span></div>
+      <div class="row-actions">
+        <button class="btn secondary small" @click="toggleUser(u)">{{ u.active ? "Deactivate" : "Reactivate" }}</button>
+        <button class="btn secondary small" @click="deleteUser(u.id)">Remove</button>
+      </div>
     </div>
     <div class="card" style="flex-direction:column; align-items:stretch; margin-top:12px;">
       <b style="margin-bottom:8px;">Add user</b>

@@ -5,7 +5,7 @@ const orderNo = computed(() => String(route.params.orderNo));
 interface Line { nameSnapshot: string; qty: number; priceCents: number }
 interface Order {
   id: number; orderNo: string; customerName: string; note: string;
-  totalCents: number; status: string; createdAt: string; lines: Line[];
+  totalCents: number; status: string; paymentMethod: string | null; paidAt: string | null; createdAt: string; lines: Line[];
 }
 const order = ref<Order | null>(null);
 const error = ref("");
@@ -45,6 +45,7 @@ useHead({ title: "YH Coffee — Receipt" });
       <div style="display:flex; justify-content:space-between; font-weight:700; font-size:18px;">
         <span>TOTAL</span><span>{{ rm(order.totalCents) }}</span>
       </div>
+      <div v-if="order.paymentMethod" style="margin-top:8px;">Payment: <b style="text-transform:uppercase;">{{ order.paymentMethod }}</b><span v-if="order.paidAt"> · {{ dt(order.paidAt) }}</span></div>
       <div v-if="order.customerName" style="margin-top:8px;">Nama: {{ order.customerName }}</div>
       <div v-if="order.note" class="muted">Nota: {{ order.note }}</div>
       <div style="text-align:center; margin-top:24px;" class="muted">Terima kasih! 🙏</div>

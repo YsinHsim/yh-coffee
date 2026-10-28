@@ -4,7 +4,8 @@ interface MenuItem { id: number; categoryId: number | null; name: string; descri
 
 const cart = useState<Record<number, number>>("cart", () => ({}));
 
-const { data } = await useFetch<{ categories: Category[]; items: MenuItem[] }>("/api/menu");
+const { data, refresh } = await useFetch<{ categories: Category[]; items: MenuItem[]; acceptingOrders: boolean }>("/api/menu");
+const acceptingOrders = computed(() => data.value?.acceptingOrders ?? true);
 const categories = computed(() => data.value?.categories ?? []);
 const items = computed(() => data.value?.items ?? []);
 const itemById = (id: number | string) => items.value.find((i) => i.id === Number(id));
@@ -30,6 +31,7 @@ function imageFor(item: MenuItem) {
 }
 
 function add(id: number) {
+  if (!acceptingOrders.value) return;
   cart.value = { ...cart.value, [id]: (cart.value[id] ?? 0) + 1 };
 }
 function remove(id: number) {
@@ -92,6 +94,7 @@ async function submitOrder() {
     window.scrollTo({ top: 0 });
   } catch (e: any) {
     error.value = e?.data?.statusMessage ?? "Failed to submit order";
+    await refresh();
   } finally {
     submitting.value = false;
   }
@@ -122,6 +125,10 @@ useHead({ title: "YH Coffee — Menu" });
     </div>
 
     <template v-else>
+      <div v-if="!acceptingOrders" class="card store-closed" role="status">
+        <b>Store closed</b>
+        <p class="muted">We are not accepting new orders right now. You can still browse the menu.</p>
+      </div>
       <nav class="topbar">
         <div class="chips">
           <a
@@ -157,7 +164,7 @@ useHead({ title: "YH Coffee — Menu" });
       </section>
 
       <div v-if="count" class="fab-space" />
-      <button v-if="count && !sheetOpen" class="cart-fab" @click="sheetOpen = true">
+      <button v-if="count && acceptingOrders && !sheetOpen" class="cart-fab" @click="sheetOpen = true">
         <span><span class="count">{{ count }}</span>{{ rm(total) }}</span>
         <span class="go">Lihat order →</span>
       </button>
@@ -192,8 +199,8 @@ useHead({ title: "YH Coffee — Menu" });
           </div>
           <div class="sheet-foot">
             <div class="total-row"><span>Total</span><span>{{ rm(total) }}</span></div>
-            <button class="btn block" :disabled="submitting" @click="submitOrder">
-              {{ submitting ? "hantar..." : "Order sekarang" }}
+            <button class="btn block" :disabled="submitting || !acceptingOrders" @click="submitOrder">
+              {{ acceptingOrders ? (submitting ? "hantar..." : "Order sekarang") : "Store closed" }}
             </button>
             <p v-if="error" style="color:var(--red); font-size:14px; margin:10px 0 0;">{{ error }}</p>
           </div>
