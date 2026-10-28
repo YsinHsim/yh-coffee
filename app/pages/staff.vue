@@ -25,9 +25,12 @@ useHead({ title: "YH Coffee — Staff Login" });
 
 <template>
     <div class="container" style="max-width:380px; margin-top:12vh;">
-    <header class="hero" style="padding:12px 0 20px;">
-      <h1>YH Coffee</h1>
-      <p class="tagline">staff login</p>
+    <header class="menu-hero" style="padding:30px 0 24px; display:flex; justify-content:center; align-items:center; gap:14px;">
+      <img class="brand-logo" src="/logo.svg" alt="YH Coffee logo">
+      <div>
+        <h1 style="font-size:2.2rem;">YH Coffee</h1>
+        <p class="tagline">staff login</p>
+      </div>
     </header>
     <div class="card" style="flex-direction:column; align-items:stretch; padding:24px;">
       <form @submit.prevent="login">

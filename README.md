@@ -73,6 +73,10 @@ Before enabling smartphone or terminal checkout, add separate payment state (`un
 
 Phase 1.5 includes local stock photos in `public/images`. Items without an `imageUrl` get a default based on their category/name. Admins can select a default or paste a full image URL when adding an item. No bucket is needed now; Cloudflare R2 can supply those URLs later.
 
+## Appearance
+
+The customer and staff interfaces support light and dark themes. The top-right toggle saves the choice in the browser's local storage; without a saved choice, the app follows the device preference. Stock menu images and the existing layout remain unchanged.
+
 ## Money handling
 
 All prices are integers in **sen** (RM4.50 = `450`). The server re-prices every order from the DB — client-sent prices are ignored.
