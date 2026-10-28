@@ -42,6 +42,10 @@ Menu + order system for a single coffee shop. Customers order from a QR-scannabl
 | `DATABASE_URL` | Neon Postgres connection string (pooled) |
 | `NUXT_SESSION_PASSWORD` | Session cookie signing secret, 32+ chars |
 
+## Menu images
+
+Phase 1.5 includes local stock photos in `public/images`. Items without an `imageUrl` get a default based on their category/name. Admins can select a default or paste a full image URL when adding an item. No bucket is needed now; Cloudflare R2 can supply those URLs later.
+
 ## Money handling
 
 All prices are integers in **sen** (RM4.50 = `450`). The server re-prices every order from the DB — client-sent prices are ignored.

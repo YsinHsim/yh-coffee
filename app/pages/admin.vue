@@ -128,6 +128,14 @@ useHead({ title: "YH Coffee — Admin" });
           <option v-for="c in data?.categories" :key="c.id" :value="c.id">{{ c.name }}</option>
         </select>
       </div>
+      <select v-model="form.imageUrl">
+        <option value="">Auto default image</option>
+        <option value="/images/coffee.jpg">Default: coffee</option>
+        <option value="/images/tea.jpg">Default: tea</option>
+        <option value="/images/food.jpg">Default: food</option>
+        <option value="/images/toast.jpg">Default: toast</option>
+      </select>
+      <input v-model="form.imageUrl" placeholder="Or paste image URL (R2 later)">
       <button class="btn" style="margin-top:10px;" @click="addItem">Add item</button>
     </div>
 

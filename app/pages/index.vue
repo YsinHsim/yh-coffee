@@ -20,14 +20,13 @@ const grouped = computed(() =>
     .filter((c) => c.items.length > 0),
 );
 
-// Emoji stand-in until items have photos (imageUrl).
-function emojiFor(item: MenuItem) {
+function imageFor(item: MenuItem) {
+  if (item.imageUrl) return item.imageUrl;
   const n = `${categories.value.find((c) => c.id === item.categoryId)?.name ?? ""} ${item.name}`.toLowerCase();
-  if (n.includes("teh")) return "🍵";
-  if (n.includes("roti") || n.includes("toast")) return "🍞";
-  if (n.includes("nasi") || n.includes("makan") || n.includes("mee")) return "🍛";
-  if (n.includes("kek") || n.includes("cake")) return "🍰";
-  return "☕";
+  if (n.includes("teh") || n.includes("tea")) return "/images/tea.jpg";
+  if (n.includes("roti") || n.includes("toast")) return "/images/toast.jpg";
+  if (n.includes("nasi") || n.includes("makan") || n.includes("mee")) return "/images/food.jpg";
+  return "/images/coffee.jpg";
 }
 
 function add(id: number) {
@@ -104,9 +103,12 @@ useHead({ title: "YH Coffee — Menu" });
 
 <template>
   <div class="container" style="padding-top:0;">
-    <header class="hero" style="padding:32px 0 20px;">
-      <h1>YH Coffee</h1>
-      <p class="tagline">pesan sini, ambil kat kaunter ✨</p>
+    <header class="hero menu-hero">
+      <img class="brand-logo" src="/logo.svg" alt="YH Coffee logo">
+      <div>
+        <h1>YH Coffee</h1>
+        <p class="tagline">your daily brew, done right ✨</p>
+      </div>
     </header>
 
     <div v-if="result" class="card stack success">
@@ -131,22 +133,23 @@ useHead({ title: "YH Coffee — Menu" });
 
       <section v-for="cat in grouped" :id="`cat-${cat.id}`" :key="cat.id" :data-cat="cat.id" class="menu-section">
         <h2 class="cat">{{ cat.name }}</h2>
-        <div v-for="item in cat.items" :key="item.id" class="item" :class="{ 'in-cart': cart[item.id] }">
-          <div class="thumb">
-            <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.name" loading="lazy">
-            <span v-else aria-hidden="true">{{ emojiFor(item) }}</span>
-          </div>
-          <div class="item-body">
-            <b>{{ item.name }}</b>
-            <span v-if="item.description" class="muted">{{ item.description }}</span>
-            <div class="item-foot">
-              <span class="price">{{ rm(item.priceCents) }}</span>
-              <div v-if="cart[item.id]" class="stepper">
-                <button class="icon-btn ghost" :aria-label="`Kurang ${item.name}`" @click="remove(item.id)">−</button>
-                <b>{{ cart[item.id] }}</b>
-                <button class="icon-btn" :aria-label="`Tambah ${item.name}`" @click="add(item.id)">+</button>
+        <div class="item-grid">
+          <div v-for="(item, index) in cat.items" :key="item.id" class="item" :class="{ 'in-cart': cart[item.id] }" :style="{ '--delay': `${index * 55}ms` }">
+            <div class="thumb">
+              <img :src="imageFor(item)" :alt="item.name" loading="lazy">
+            </div>
+            <div class="item-body">
+              <b>{{ item.name }}</b>
+              <span v-if="item.description" class="muted">{{ item.description }}</span>
+              <div class="item-foot">
+                <span class="price">{{ rm(item.priceCents) }}</span>
+                <div v-if="cart[item.id]" class="stepper">
+                  <button class="icon-btn ghost" :aria-label="`Kurang ${item.name}`" @click="remove(item.id)">−</button>
+                  <b>{{ cart[item.id] }}</b>
+                  <button class="icon-btn" :aria-label="`Tambah ${item.name}`" @click="add(item.id)">+</button>
+                </div>
+                <button v-else class="icon-btn" :aria-label="`Tambah ${item.name}`" @click="add(item.id)">+</button>
               </div>
-              <button v-else class="icon-btn" :aria-label="`Tambah ${item.name}`" @click="add(item.id)">+</button>
             </div>
           </div>
         </div>

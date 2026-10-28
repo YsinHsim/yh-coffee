@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="20" fill="#ffb454"/>
+  <path d="M17 23h28v15a14 14 0 0 1-28 0V23Z" fill="#171411"/>
+  <path d="M45 27h3a6 6 0 0 1 0 12h-4" fill="none" stroke="#171411" stroke-width="4" stroke-linecap="round"/>
+  <path d="M25 12v6m8-8v8m8-6v6" fill="none" stroke="#171411" stroke-width="3" stroke-linecap="round"/>
+  <text x="31" y="39" fill="#ffb454" font-family="Arial,sans-serif" font-size="14" font-weight="700" text-anchor="middle">YH</text>
+</svg>
