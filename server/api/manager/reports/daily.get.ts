@@ -34,5 +34,13 @@ export default defineEventHandler(async (event) => {
     sql`(${schema.orders.createdAt} at time zone 'Asia/Kuala_Lumpur')::date <= ${day}::date`,
   )).orderBy(desc(schema.orders.id));
 
-  return { day, ...totals, payments, unresolved, canClose: unresolved.length === 0 };
+  const shopActivity = await db.select({
+    actorName: schema.shopEvents.actorName,
+    acceptingOrders: schema.shopEvents.toAcceptingOrders,
+    createdAt: schema.shopEvents.createdAt,
+  }).from(schema.shopEvents)
+    .where(sql`(${schema.shopEvents.createdAt} at time zone 'Asia/Kuala_Lumpur')::date = ${day}::date`)
+    .orderBy(desc(schema.shopEvents.createdAt));
+
+  return { day, ...totals, payments, unresolved, shopActivity, canClose: unresolved.length === 0 };
 });

@@ -97,13 +97,17 @@ async function toggleAvailable(item: { id: number; available: boolean }) {
 async function toggleShop() {
   if (!summary.value) return;
   const closing = summary.value.acceptingOrders;
-  if (closing && !confirm("Close the store to new customer orders? All active orders must already be completed or cancelled.")) return;
+  let password: string | undefined;
+  if (closing) {
+    password = prompt("Enter your password to confirm closing the store:") ?? undefined;
+    if (!password) return;
+  }
   updatingShop.value = true;
   actionError.value = "";
   try {
     const state = await $fetch<{ acceptingOrders: boolean }>("/api/manager/shop", {
       method: "PATCH",
-      body: { acceptingOrders: !closing },
+      body: { acceptingOrders: !closing, password },
     });
     summary.value.acceptingOrders = state.acceptingOrders;
   } catch (e: any) {

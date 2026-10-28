@@ -10,6 +10,7 @@ interface Report {
   collectedCents: number;
   payments: { method: string; orders: number; totalCents: number }[];
   unresolved: { id: number; orderNo: string; customerName: string; status: string; paymentStatus: string; totalCents: number }[];
+  shopActivity: { actorName: string; acceptingOrders: boolean; createdAt: string }[];
   canClose: boolean;
 }
 const day = ref(new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kuala_Lumpur" }).format(new Date()));
@@ -30,6 +31,7 @@ async function load() {
 }
 onMounted(load);
 const rm = (cents: number) => `RM${(cents / 100).toFixed(2)}`;
+const time = (iso: string) => new Date(iso).toLocaleTimeString("en-MY", { timeZone: "Asia/Kuala_Lumpur", hour: "2-digit", minute: "2-digit" });
 useHead({ title: "YH Coffee — Daily closing" });
 </script>
 
@@ -61,6 +63,13 @@ useHead({ title: "YH Coffee — Daily closing" });
       <div v-for="payment in report.payments" :key="payment.method" class="card">
         <b style="text-transform:capitalize;">{{ payment.method }}</b>
         <span>{{ payment.orders }} orders · <b>{{ rm(payment.totalCents) }}</b></span>
+      </div>
+
+      <h2>Store activity</h2>
+      <p v-if="!report.shopActivity.length" class="muted">No opening or closing recorded for this date.</p>
+      <div v-for="(activity, index) in report.shopActivity" :key="index" class="card">
+        <div><b>Store {{ activity.acceptingOrders ? 'opened' : 'closed' }}</b><div class="muted">By {{ activity.actorName }}</div></div>
+        <span>{{ time(activity.createdAt) }}</span>
       </div>
 
       <h2>Close-day checklist</h2>

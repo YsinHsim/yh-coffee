@@ -69,7 +69,7 @@ The app must never collect raw card details itself. Smartphone and terminal orde
 - The manager page lists active and recently completed orders, with controls to advance fulfilment and record payment.
 - Each new order gets an unguessable 192-bit tracking token. Its `/track/:token` link shows only that order and refreshes every 10 seconds. Predictable order numbers are never accepted as public tracking credentials.
 - The customer tracking page is optional for the shop. A future collection display can show order numbers without customer details.
-- Staff can open or close the store. Closing is blocked until all orders are completed and paid, or unpaid orders are cancelled; the public API also rejects new orders while closed.
+- Staff can open or close the store. Closing requires the signed-in staff member's password and is blocked until all orders are completed and paid, or unpaid orders are cancelled. Opening and closing record the actor and timestamp in the daily report; the public API also rejects new orders while closed.
 - Order creation runs in a database transaction with an atomic Malaysia-time daily counter, preventing duplicate order numbers and partial orders.
 - Staff status changes record the actor, previous status, new status, and timestamp. Only valid forward transitions are accepted.
 - The printable daily report uses `Asia/Kuala_Lumpur`, breaks down collections by payment method, counts paid/cancelled orders, and lists unfinished orders that block closing.

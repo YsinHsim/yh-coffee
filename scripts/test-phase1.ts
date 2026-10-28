@@ -57,11 +57,13 @@ try {
   const existing = await request("/api/manager/orders?status=pending", {}, staffCookie);
   assert(existing.data.length === 0, "Test requires no pending orders; refusing to modify real active orders");
   const menu = await request("/api/menu");
+  result = await request("/api/manager/shop", patch({ acceptingOrders: true }), adminCookie);
+  assert(result.response.ok, "Could not open the store for testing");
   const itemId = menu.data.items[0].id;
   const orderBody = { customerName: marker, note: "automated phase 1 test", items: [{ itemId, qty: 1 }] };
   result = await request("/api/orders", post(orderBody));
   assert(result.response.ok, "Could not create test order");
-  result = await request("/api/manager/shop", patch({ acceptingOrders: false }), staffCookie);
+  result = await request("/api/manager/shop", patch({ acceptingOrders: false, password: process.env.SEED_ADMIN_PASS }), staffCookie);
   assert(result.response.status === 409, `Close with active orders returned ${result.response.status}`);
   console.log("PASS close is blocked while active orders remain");
 
@@ -84,7 +86,14 @@ try {
   console.log("PASS staff transitions are validated and audited with actor identity");
 
   result = await request("/api/manager/shop", patch({ acceptingOrders: false }), staffCookie);
+  assert(result.response.status === 400, "Closing did not require a password");
+  result = await request("/api/manager/shop", patch({ acceptingOrders: false, password: "incorrect-test-password" }), staffCookie);
+  assert(result.response.status === 401, "Closing accepted an incorrect password");
+  result = await request("/api/manager/shop", patch({ acceptingOrders: false, password: "test-only-not-a-real-password" }), staffCookie);
   assert(result.response.ok, `Close failed: ${JSON.stringify(result.data)}`);
+  const shopEvents = await db.select().from(schema.shopEvents).where(eq(schema.shopEvents.actorName, marker));
+  assert(shopEvents.length === 1 && !shopEvents[0].toAcceptingOrders, "Closing actor was not audited");
+  console.log("PASS closing requires the actor password and records identity");
   result = await request("/api/orders", post(orderBody));
   assert(result.response.status === 409, `Closed checkout returned ${result.response.status}`);
   result = await request("/api/menu");

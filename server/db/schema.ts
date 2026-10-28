@@ -78,6 +78,15 @@ export const shop = pgTable("shop", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const shopEvents = pgTable("shop_events", {
+  id: serial("id").primaryKey(),
+  actorId: integer("actor_id").references(() => users.id, { onDelete: "set null" }),
+  actorName: text("actor_name").notNull(),
+  fromAcceptingOrders: boolean("from_accepting_orders").notNull(),
+  toAcceptingOrders: boolean("to_accepting_orders").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),

@@ -1,7 +1,7 @@
 import { and, eq, or, sql } from "drizzle-orm";
 
 export default defineEventHandler(async (event) => {
-  await requireAuth(event, ["manager", "admin"]);
+  const actor = await requireAuth(event, ["manager", "admin"]);
   const body = await readBody(event);
   if (typeof body?.acceptingOrders !== "boolean")
     throw createError({ statusCode: 400, statusMessage: "Invalid shop state" });
@@ -17,11 +17,22 @@ export default defineEventHandler(async (event) => {
       )).limit(1);
       if (active.length)
         throw createError({ statusCode: 409, statusMessage: "Complete and collect payment for every order, or cancel unpaid orders, before closing." });
+      if (typeof body.password !== "string" || !body.password)
+        throw createError({ statusCode: 400, statusMessage: "Enter your password to close the store." });
+      const [user] = await tx.select().from(schema.users).where(eq(schema.users.id, actor.id)).limit(1);
+      if (!user || !(await verifyPassword(user.passwordHash, body.password)))
+        throw createError({ statusCode: 401, statusMessage: "Incorrect password. The store was not closed." });
     }
+    if (state!.acceptingOrders === body.acceptingOrders)
+      return { acceptingOrders: state!.acceptingOrders };
 
     const [updated] = await tx.update(schema.shop)
       .set({ acceptingOrders: body.acceptingOrders, updatedAt: new Date() })
       .where(eq(schema.shop.id, 1)).returning();
+    await tx.insert(schema.shopEvents).values({
+      actorId: actor.id, actorName: actor.username,
+      fromAcceptingOrders: state!.acceptingOrders, toAcceptingOrders: body.acceptingOrders,
+    });
     return { acceptingOrders: updated!.acceptingOrders };
   });
 });
