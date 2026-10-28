@@ -8,8 +8,8 @@ Menu + order system for a single coffee shop. Customers order from a QR-scannabl
 |---|---|---|
 | `/` | Public | Customer menu + cart + order (no login) |
 | `/track/:token` | Public | Private customer order-progress page, refreshed automatically |
-| `/staff` | Staff | Login |
-| `/manager` | Manager/Admin | Current orders, preparing/ready/paid controls, daily revenue, sold-out toggle |
+| `/staff` | Staff | Login; all staff land on the current-orders page |
+| `/manager` | Manager/Admin | Staff home: Orders, Menu, and Sales tabs |
 | `/admin` | Admin | CRUD items, categories, users |
 | `/receipt/:orderNo` | Staff | Printable receipt |
 

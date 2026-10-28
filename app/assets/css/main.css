@@ -325,6 +325,44 @@ select option { background: var(--card-2); }
 .statgrid .card { margin: 0; flex-direction: column; align-items: center; text-align: center; gap: 2px; }
 .statgrid b { font-family: "Space Grotesk", sans-serif; font-size: 24px; color: var(--accent); }
 
+/* ---- staff workspace ---- */
+.staff-page { max-width: 760px; padding-top: 24px; }
+.staff-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
+.staff-kicker { color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: 0.14em; }
+.staff-header h1 { font-size: clamp(1.8rem, 6vw, 2.4rem); margin: 4px 0 0; }
+.staff-tabs { display: flex; gap: 6px; padding: 5px; margin-bottom: 24px; overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; }
+.staff-tabs a { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; min-width: max-content; padding: 10px 14px; border-radius: 11px; color: var(--muted); font-size: 14px; font-weight: 700; text-decoration: none; }
+.staff-tabs a.active { color: #1a120b; background: var(--accent); }
+.tab-count { min-width: 20px; padding: 1px 5px; border-radius: 999px; background: #1a120b; color: var(--accent); font-size: 11px; }
+.section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.section-title h2 { font-size: 18px; margin: 0; }
+.section-title .muted { font-size: 11px; }
+.order-card { flex-direction: column; align-items: stretch; padding: 18px; }
+.order-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.order-card-head .muted { font-size: 10px; letter-spacing: 0.12em; }
+.order-card-head h3 { font-size: 22px; margin: 2px 0; }
+.customer-name { color: var(--accent); font-size: 14px; }
+.qty { color: var(--accent); margin-right: 5px; }
+.order-note { padding: 10px 12px; background: var(--accent-soft); border-radius: 10px; font-size: 13px; }
+.order-total { display: flex; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--line); }
+.order-total b { color: var(--accent); font-size: 18px; }
+.order-actions > .btn { width: 100%; }
+.secondary-actions { display: flex; gap: 8px; margin-top: 8px; }
+.secondary-actions > * { flex: 1; }
+.btn.danger { color: var(--red); }
+.empty-state, .loading-state { padding: 52px 20px; text-align: center; border: 1px dashed var(--line-strong); border-radius: var(--radius); }
+.empty-state p { margin-bottom: 0; }
+.staff-help { color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+.sale-amount { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.staff-error { padding: 12px 14px; color: var(--red); background: rgba(255,143,163,0.08); border: 1px solid rgba(255,143,163,0.3); border-radius: var(--radius-sm); }
+.staff-error button { float: right; color: inherit; background: none; border: 0; font-weight: 700; cursor: pointer; }
+.loading-state { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.loading-state p { margin: 0; }
+.spinner, .mini-spinner { display: inline-block; flex: none; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
+.spinner { width: 32px; height: 32px; color: var(--accent); border-width: 3px; }
+.mini-spinner { width: 14px; height: 14px; margin-right: 5px; vertical-align: -2px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ---- staff rows ---- */
 .row-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .inline-form { display: flex; gap: 8px; }

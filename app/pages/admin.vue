@@ -72,7 +72,7 @@ async function deleteUser(id: number) {
 }
 async function logout() {
   await $fetch("/api/auth/logout", { method: "POST" });
-  await navigateTo("/");
+  await navigateTo("/staff");
 }
 useHead({ title: "YH Coffee — Admin" });
 </script>
@@ -84,8 +84,8 @@ useHead({ title: "YH Coffee — Admin" });
       <p class="tagline">admin mode</p>
     </header>
     <div style="display:flex; gap:8px; margin-bottom:16px;">
-      <NuxtLink to="/manager" class="btn secondary small" style="flex:1;">📋 Manager</NuxtLink>
-      <button class="btn secondary small" style="flex:1;" @click="logout">Log keluar</button>
+      <NuxtLink to="/manager" class="btn small" style="flex:1;">← Staff home</NuxtLink>
+      <button class="btn secondary small" style="flex:1;" @click="logout">Log out</button>
     </div>
 
     <!-- Categories -->

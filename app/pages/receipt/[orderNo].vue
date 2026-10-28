@@ -51,7 +51,7 @@ useHead({ title: "YH Coffee — Receipt" });
     </div>
     <div class="no-print" style="display:flex; gap:8px; justify-content:center; margin-top:16px;">
       <button class="btn" @click="doPrint">🖨 Print</button>
-      <NuxtLink to="/manager" class="btn secondary">Back</NuxtLink>
+      <NuxtLink to="/manager" class="btn secondary">Back to orders</NuxtLink>
     </div>
   </div>
 </template>

@@ -13,7 +13,7 @@ async function login() {
   try {
     await $fetch("/api/auth/login", { method: "POST", body: { username: username.value, password: password.value } });
     await fetchSession(); // refresh client session state from the new cookie
-    await navigateTo(sessionUser.value?.role === "admin" ? "/admin" : "/manager");
+    await navigateTo("/manager");
   } catch (e: any) {
     error.value = e?.data?.statusMessage ?? "Login failed";
   } finally {
@@ -33,7 +33,7 @@ useHead({ title: "YH Coffee — Staff Login" });
       <form @submit.prevent="login">
         <input v-model="username" placeholder="Username" autocomplete="username">
         <input v-model="password" type="password" placeholder="Password" autocomplete="current-password">
-        <button class="btn" style="width:100%;" :disabled="loading">Masuk →</button>
+        <button class="btn" style="width:100%;" :disabled="loading"><span v-if="loading" class="mini-spinner" />{{ loading ? "Signing in…" : "Masuk →" }}</button>
       </form>
       <p v-if="error" style="color:var(--red); font-size:14px; margin:4px 0 0;">{{ error }}</p>
     </div>
