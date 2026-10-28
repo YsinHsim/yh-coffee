@@ -1,5 +1,17 @@
 <script setup lang="ts">
+import { darkTheme, NConfigProvider } from "naive-ui";
+
 const theme = useState<"light" | "dark">("theme", () => "dark");
+const naiveTheme = computed(() => theme.value === "dark" ? darkTheme : null);
+const themeOverrides = {
+  common: {
+    primaryColor: "#f5a524",
+    primaryColorHover: "#ffb63e",
+    primaryColorPressed: "#db8e15",
+    primaryColorSuppl: "#f5a524",
+    borderRadius: "8px",
+  },
+};
 
 function applyTheme(value: "light" | "dark") {
   theme.value = value;
@@ -25,6 +37,8 @@ onMounted(() => {
       <span v-if="theme === 'dark'">☀</span><span v-else>☾</span>
       <span class="theme-label">{{ theme === 'dark' ? 'Light' : 'Dark' }}</span>
     </button>
-    <NuxtPage />
+    <NConfigProvider :theme="naiveTheme" :theme-overrides="themeOverrides">
+      <NuxtPage />
+    </NConfigProvider>
   </div>
 </template>

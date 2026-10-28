@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { NButton } from "naive-ui";
+
 interface SessionUser { id: number; username: string; role: string }
 const { user, fetch: fetchSession } = useUserSession();
 const sessionUser = computed(() => (user.value ?? null) as SessionUser | null);
@@ -36,7 +38,7 @@ useHead({ title: "YH Coffee — Staff Login" });
       <form @submit.prevent="login">
         <input v-model="username" placeholder="Username" autocomplete="username">
         <input v-model="password" type="password" placeholder="Password" autocomplete="current-password">
-        <button class="btn" style="width:100%;" :disabled="loading"><span v-if="loading" class="mini-spinner" />{{ loading ? "Signing in…" : "Masuk →" }}</button>
+        <NButton type="primary" block :loading="loading" attr-type="submit">{{ loading ? "Signing in…" : "Masuk →" }}</NButton>
       </form>
       <p v-if="error" style="color:var(--red); font-size:14px; margin:4px 0 0;">{{ error }}</p>
     </div>

@@ -2,6 +2,11 @@ export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
   modules: ["nuxt-auth-utils"],
+  build: { transpile: ["naive-ui", "vueuc"] },
+  vite: {
+    optimizeDeps: { include: ["naive-ui", "vueuc"] },
+    ssr: { noExternal: ["naive-ui", "vueuc"] },
+  },
   css: ["~/assets/css/main.css"],
   nitro: {
     esbuild: {

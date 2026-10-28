@@ -75,7 +75,7 @@ Phase 1.5 includes local stock photos in `public/images`. Items without an `imag
 
 ## Appearance
 
-The customer and staff interfaces support light and dark themes. The top-right toggle saves the choice in the browser's local storage; without a saved choice, the app follows the device preference. Stock menu images and the existing layout remain unchanged.
+The customer and staff interfaces support light and dark themes. The top-right toggle saves the choice in the browser's local storage; without a saved choice, the app follows the device preference. The design uses neutral surfaces, compact spacing, and a single amber accent. Staff controls and loading states use Naive UI; the customer menu remains lightweight custom Vue/CSS.
 
 ## Money handling
 

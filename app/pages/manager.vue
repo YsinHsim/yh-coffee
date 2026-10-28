@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { NButton, NSpin } from "naive-ui";
+
 definePageMeta({ middleware: "staff-only" });
 
 interface OrderLine { nameSnapshot: string; qty: number; priceCents: number }
@@ -87,7 +89,7 @@ useHead({ title: "YH Coffee — Staff" });
         <span class="staff-kicker">YH COFFEE / STAFF</span>
         <h1>{{ tab === "orders" ? "Current orders" : tab === "menu" ? "Menu availability" : "Today's sales" }}</h1>
       </div>
-      <button class="btn secondary small" @click="logout">Log out</button>
+      <NButton size="small" secondary @click="logout">Log out</NButton>
     </header>
 
     <nav class="staff-tabs" aria-label="Staff navigation">
@@ -99,7 +101,7 @@ useHead({ title: "YH Coffee — Staff" });
 
     <p v-if="actionError" class="staff-error">{{ actionError }} <button @click="refresh">Retry</button></p>
     <div v-if="loading" class="loading-state" role="status">
-      <span class="spinner" />
+      <NSpin size="large" />
       <b>Loading staff workspace…</b>
       <p class="muted">Getting the latest orders and menu.</p>
     </div>
@@ -131,13 +133,13 @@ useHead({ title: "YH Coffee — Staff" });
         <p v-if="o.note" class="order-note"><b>Note:</b> {{ o.note }}</p>
         <div class="order-total"><span>Total</span><b>{{ rm(o.totalCents) }}</b></div>
         <div class="order-actions">
-          <button v-if="o.status === 'pending'" class="btn" :disabled="updating === o.id" @click="setStatus(o, 'preparing')"><span v-if="updating === o.id" class="mini-spinner" />{{ updating === o.id ? "Updating…" : "Start preparing →" }}</button>
-          <button v-else-if="o.status === 'preparing'" class="btn" :disabled="updating === o.id" @click="setStatus(o, 'ready')"><span v-if="updating === o.id" class="mini-spinner" />{{ updating === o.id ? "Updating…" : "Ready for pickup ✓" }}</button>
-          <button v-else class="btn" :disabled="updating === o.id" @click="setStatus(o, 'paid')"><span v-if="updating === o.id" class="mini-spinner" />{{ updating === o.id ? "Updating…" : "Complete & mark paid ✓" }}</button>
+          <NButton v-if="o.status === 'pending'" type="primary" block :loading="updating === o.id" @click="setStatus(o, 'preparing')">Start preparing →</NButton>
+          <NButton v-else-if="o.status === 'preparing'" type="primary" block :loading="updating === o.id" @click="setStatus(o, 'ready')">Ready for pickup ✓</NButton>
+          <NButton v-else type="primary" block :loading="updating === o.id" @click="setStatus(o, 'paid')">Complete & mark paid ✓</NButton>
           <div class="secondary-actions">
-            <button v-if="o.status !== 'ready'" class="btn secondary small" @click="setStatus(o, 'paid')">Mark paid</button>
-            <NuxtLink :to="`/receipt/${o.orderNo}`" class="btn secondary small">Receipt</NuxtLink>
-            <button class="btn secondary small danger" @click="setStatus(o, 'cancelled')">Cancel</button>
+          <NButton v-if="o.status !== 'ready'" size="small" secondary @click="setStatus(o, 'paid')">Mark paid</NButton>
+          <NButton size="small" secondary tag="a" :href="`/receipt/${o.orderNo}`">Receipt</NButton>
+          <NButton size="small" secondary type="error" @click="setStatus(o, 'cancelled')">Cancel</NButton>
           </div>
         </div>
       </article>
@@ -150,9 +152,9 @@ useHead({ title: "YH Coffee — Staff" });
           <b>{{ item.name }}</b>
           <div class="muted">{{ item.categoryName ?? "Uncategorised" }} · {{ rm(item.priceCents) }}</div>
         </div>
-        <button class="btn small" :class="{ secondary: !item.available }" :disabled="updatingItem === item.id" @click="toggleAvailable(item)">
-          <span v-if="updatingItem === item.id" class="mini-spinner" />{{ updatingItem === item.id ? "Saving…" : item.available ? "Available" : "Sold out" }}
-        </button>
+        <NButton size="small" :type="item.available ? 'primary' : 'default'" :secondary="!item.available" :loading="updatingItem === item.id" @click="toggleAvailable(item)">
+          {{ item.available ? "Available" : "Sold out" }}
+        </NButton>
       </div>
     </main>
 
