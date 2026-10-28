@@ -65,10 +65,18 @@ async function addUser() {
   newUser.value = { username: "", password: "", role: "manager" };
   await refresh();
 }
+const actionError = ref("");
+
 async function deleteUser(id: number) {
-  if (!confirm("Remove this user?")) return;
-  await $fetch(`/api/admin/catalog/${id}?kind=user`, { method: "DELETE" });
-  await refresh();
+  const target = data.value?.users.find((u) => u.id === id);
+  if (!confirm(`Remove user “${target?.username ?? id}”? They will immediately lose staff access.`)) return;
+  actionError.value = "";
+  try {
+    await $fetch(`/api/admin/catalog/${id}?kind=user`, { method: "DELETE" });
+    await refresh();
+  } catch (e: any) {
+    actionError.value = e?.data?.statusMessage ?? "Could not remove user";
+  }
 }
 async function logout() {
   await $fetch("/api/auth/logout", { method: "POST" });
@@ -141,6 +149,8 @@ useHead({ title: "YH Coffee — Admin" });
 
     <!-- Users -->
     <h2 class="cat" style="margin-top:32px;">Users</h2>
+    <p class="muted">Removing a user is permanent. You cannot remove yourself or the last admin.</p>
+    <p v-if="actionError" class="staff-error">{{ actionError }}</p>
     <div v-for="u in data?.users ?? []" :key="u.id" class="card">
       <div><b>{{ u.username }}</b> <span class="muted">{{ u.role }}</span></div>
       <button class="btn secondary small" @click="deleteUser(u.id)">Remove</button>

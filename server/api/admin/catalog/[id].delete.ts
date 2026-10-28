@@ -1,16 +1,33 @@
 import { eq, sql } from "drizzle-orm";
 
 export default defineEventHandler(async (event) => {
-  await requireAuth(event, ["admin"]);
+  const actor = await requireAuth(event, ["admin"]);
   const id = Number(getRouterParam(event, "id"));
   const kind = getQuery(event).kind ?? "item";
+  if (!Number.isInteger(id) || id < 1) throw createError({ statusCode: 400, statusMessage: "Invalid ID" });
 
   if (kind === "category") {
-    // detach items first
+    // Item snapshots preserve names and prices on existing orders.
     await db.update(schema.items).set({ categoryId: null }).where(eq(schema.items.categoryId, id));
-    await db.delete(schema.categories).where(eq(schema.categories.id, id));
+    const [deleted] = await db.delete(schema.categories).where(eq(schema.categories.id, id)).returning();
+    if (!deleted) throw createError({ statusCode: 404, statusMessage: "Category not found" });
     return { ok: true };
   }
-  await db.delete(schema.items).where(eq(schema.items.id, id));
+
+  if (kind === "user") {
+    if (id === actor.id) throw createError({ statusCode: 400, statusMessage: "You cannot remove your own account" });
+    const [target] = await db.select().from(schema.users).where(eq(schema.users.id, id)).limit(1);
+    if (!target) throw createError({ statusCode: 404, statusMessage: "User not found" });
+    if (target.role === "admin") {
+      const [admins] = await db.select({ count: sql<number>`count(*)::int` }).from(schema.users).where(eq(schema.users.role, "admin"));
+      if ((admins?.count ?? 0) <= 1)
+        throw createError({ statusCode: 400, statusMessage: "Cannot remove the last admin" });
+    }
+    await db.delete(schema.users).where(eq(schema.users.id, id));
+    return { ok: true };
+  }
+
+  const [deleted] = await db.delete(schema.items).where(eq(schema.items.id, id)).returning();
+  if (!deleted) throw createError({ statusCode: 404, statusMessage: "Item not found" });
   return { ok: true };
 });
