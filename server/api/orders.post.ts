@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { eq, inArray, sql } from "drizzle-orm";
 
 export default defineEventHandler(async (event) => {
@@ -36,11 +37,11 @@ export default defineEventHandler(async (event) => {
 
   const [order] = await db
     .insert(schema.orders)
-    .values({ orderNo, customerName, note, totalCents: total })
+    .values({ orderNo, customerName, note, totalCents: total, trackToken: randomBytes(24).toString("base64url") })
     .returning();
   if (!order) throw createError({ statusCode: 500, statusMessage: "Order creation failed" });
 
   await db.insert(schema.orderItems).values(lines.map((l) => ({ ...l, orderId: order.id })));
 
-  return { orderNo: order.orderNo, totalCents: total };
+  return { orderNo: order.orderNo, totalCents: total, trackToken: order.trackToken };
 });

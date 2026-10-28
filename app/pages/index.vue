@@ -72,14 +72,14 @@ onUnmounted(() => {
 const customerName = ref("");
 const note = ref("");
 const submitting = ref(false);
-const result = ref<{ orderNo: string; totalCents: number } | null>(null);
+const result = ref<{ orderNo: string; totalCents: number; trackToken: string } | null>(null);
 const error = ref("");
 
 async function submitOrder() {
   submitting.value = true;
   error.value = "";
   try {
-    result.value = await $fetch<{ orderNo: string; totalCents: number }>("/api/orders", {
+    result.value = await $fetch<{ orderNo: string; totalCents: number; trackToken: string }>("/api/orders", {
       method: "POST",
       body: {
         customerName: customerName.value,
@@ -117,6 +117,7 @@ useHead({ title: "YH Coffee — Menu" });
       <p class="muted" style="margin:6px 0 0;">Nombor order anda</p>
       <p class="order-no">{{ result.orderNo }}</p>
       <p class="muted" style="margin:0 0 18px;">Total <b style="color:var(--text)">{{ rm(result.totalCents) }}</b> — bayar kat kaunter ya</p>
+      <NuxtLink :to="`/track/${result.trackToken}`" class="btn">Track my order →</NuxtLink>
       <button class="btn secondary" @click="result = null">Order lagi</button>
     </div>
 

@@ -25,7 +25,8 @@ export const orders = pgTable(
     customerName: text("customer_name").notNull().default(""),
     note: text("note").notNull().default(""),
     totalCents: integer("total_cents").notNull().default(0),
-    status: text("status").notNull().default("pending"), // pending | paid | cancelled
+    status: text("status").notNull().default("pending"), // pending | preparing | ready | paid | cancelled
+    trackToken: text("track_token").notNull().unique(), // private customer tracking link
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("orders_status_idx").on(t.status)],

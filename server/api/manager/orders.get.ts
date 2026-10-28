@@ -1,4 +1,4 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray, ne } from "drizzle-orm";
 
 export default defineEventHandler(async (event) => {
   const session = await requireAuth(event, ["manager", "admin"]);
@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const orders = await db
     .select()
     .from(schema.orders)
-    .where(status ? eq(schema.orders.status, status) : undefined)
+    .where(status ? eq(schema.orders.status, status) : ne(schema.orders.status, "cancelled"))
     .orderBy(desc(schema.orders.id))
     .limit(100);
 

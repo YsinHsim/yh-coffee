@@ -1,4 +1,4 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, eq, inArray, sql } from "drizzle-orm";
 
 export default defineEventHandler(async (event) => {
   await requireAuth(event, ["manager", "admin"]);
@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   const [pendingAgg] = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(schema.orders)
-    .where(eq(schema.orders.status, "pending"));
+    .where(inArray(schema.orders.status, ["pending", "preparing", "ready"]));
 
   const items = await db
     .select({

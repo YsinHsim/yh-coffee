@@ -13,7 +13,7 @@ const rm = (c: number) => `RM${(c / 100).toFixed(2)}`;
 
 async function refresh() {
   const [o, s] = await Promise.all([
-    $fetch<Order[]>("/api/manager/orders?status=pending"),
+    $fetch<Order[]>("/api/manager/orders"),
     $fetch<NonNullable<typeof summary.value>>("/api/manager/summary"),
   ]);
   orders.value = o;
@@ -59,18 +59,18 @@ useHead({ title: "YH Coffee — Manager" });
         <div class="muted">{{ summary.today.orders }} orders</div>
       </div>
       <div class="card">
-        <div class="muted">Pending</div>
+        <div class="muted">Active</div>
         <b>{{ summary.pendingCount }}</b>
         <div class="muted">orders</div>
       </div>
     </div>
 
-    <h2 class="cat">Pending orders</h2>
-    <p v-if="!orders.length" class="muted">No pending orders.</p>
+    <h2 class="cat">Current orders</h2>
+    <p v-if="!orders.length" class="muted">No current orders.</p>
     <div v-for="o in orders" :key="o.id" class="card" style="flex-direction:column; align-items:stretch;">
       <div style="display:flex; justify-content:space-between;">
         <b>{{ o.orderNo }}</b>
-        <span class="badge pending">{{ o.status }}</span>
+        <span class="badge" :class="o.status">{{ o.status }}</span>
       </div>
       <div v-if="o.customerName" class="muted">Nama: {{ o.customerName }}</div>
       <table>
@@ -83,8 +83,10 @@ useHead({ title: "YH Coffee — Manager" });
         <span>Total</span><span>{{ rm(o.totalCents) }}</span>
       </div>
       <div v-if="o.note" class="muted" style="margin-bottom:6px;">Nota: {{ o.note }}</div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn small" style="flex:1;" @click="setStatus(o, 'paid')">✓ Paid</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button v-if="o.status === 'pending'" class="btn small" style="flex:1;" @click="setStatus(o, 'preparing')">Start preparing</button>
+        <button v-if="o.status === 'preparing'" class="btn small" style="flex:1;" @click="setStatus(o, 'ready')">Mark ready</button>
+        <button v-if="o.status !== 'paid'" class="btn secondary small" style="flex:1;" @click="setStatus(o, 'paid')">✓ Paid</button>
         <NuxtLink :to="`/receipt/${o.orderNo}`" class="btn secondary small">🖨</NuxtLink>
         <button class="btn secondary small" @click="setStatus(o, 'cancelled')">✗</button>
       </div>

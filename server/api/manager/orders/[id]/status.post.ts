@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const id = Number(getRouterParam(event, "id"));
   const body = await readBody(event);
   const status = body?.status;
-  if (!["pending", "paid", "cancelled"].includes(status))
+  if (!["pending", "preparing", "ready", "paid", "cancelled"].includes(status))
     throw createError({ statusCode: 400, statusMessage: "Invalid status" });
 
   const [updated] = await db

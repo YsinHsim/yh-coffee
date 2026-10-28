@@ -7,8 +7,9 @@ Menu + order system for a single coffee shop. Customers order from a QR-scannabl
 | Route | Who | What |
 |---|---|---|
 | `/` | Public | Customer menu + cart + order (no login) |
+| `/track/:token` | Public | Private customer order-progress page, refreshed automatically |
 | `/staff` | Staff | Login |
-| `/manager` | Manager/Admin | Live pending orders, mark paid/cancelled, daily revenue, sold-out toggle |
+| `/manager` | Manager/Admin | Current orders, preparing/ready/paid controls, daily revenue, sold-out toggle |
 | `/admin` | Admin | CRUD items, categories, users |
 | `/receipt/:orderNo` | Staff | Printable receipt |
 
@@ -41,6 +42,32 @@ Menu + order system for a single coffee shop. Customers order from a QR-scannabl
 |---|---|
 | `DATABASE_URL` | Neon Postgres connection string (pooled) |
 | `NUXT_SESSION_PASSWORD` | Session cookie signing secret, 32+ chars |
+
+## Ordering and payment plan
+
+The core use case is QR ordering for a single coffee shop: customers order on their phones, staff prepare orders, and customers collect them at the counter.
+
+Three payment channels are planned, but **only counter payment is implemented now**:
+
+| Channel | Methods | Handled by | Payment confirmation |
+|---|---|---|---|
+| Smartphone | Card, e-wallet, online QR (provider-dependent) | Customer | Verified provider webhook; future integration |
+| Physical terminal | All supported methods except cash | Customer | Terminal/provider integration; future integration |
+| Counter | Cash and all other supported methods | Cashier | Cashier taps **Paid**; currently implemented |
+
+The app must never collect raw card details itself. Smartphone and terminal orders should enter staff preparation only after automatic payment confirmation. Counter orders can be accepted before payment.
+
+### Current implementation
+
+- Fulfilment flow: `pending → preparing → ready → paid`; `cancelled` is also supported.
+- `paid` currently represents a completed counter-paid order and is used for daily revenue.
+- The manager page lists active and recently completed orders, with controls to advance fulfilment and record payment.
+- Each new order gets an unguessable 192-bit tracking token. Its `/track/:token` link shows only that order and refreshes every 10 seconds. Predictable order numbers are never accepted as public tracking credentials.
+- The customer tracking page is optional for the shop. A future collection display can show order numbers without customer details.
+
+### Future payment integration
+
+Before enabling smartphone or terminal checkout, add separate payment state (`unpaid`, `pending`, `paid`, `failed`) rather than overloading fulfilment state. Choose a provider, model its supported methods and fees, then verify webhook signatures and process callbacks idempotently. The physical terminal requires an API capable of linking its transaction to an order.
 
 ## Menu images
 

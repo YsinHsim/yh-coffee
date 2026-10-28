@@ -291,12 +291,32 @@ select option { background: var(--card-2); }
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 
+/* ---- customer order tracking ---- */
+.track-page { max-width: 480px; padding-top: 48px; }
+.track-page > .brand-logo { display: block; width: 56px; height: 56px; margin-bottom: 28px; }
+.track-label { color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: 0.14em; margin: 0 0 8px; }
+.track-page h1 { font-size: clamp(2.2rem, 9vw, 3rem); line-height: 1.08; margin: 0 0 12px; }
+.track-copy { color: var(--muted); line-height: 1.6; margin: 0; }
+.progress { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 26px 0 32px; }
+.progress span { height: 5px; border-radius: 999px; background: var(--card-2); }
+.progress span.done { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+.order-details { margin-bottom: 16px; }
+.order-details .cat { margin: 0 0 6px; }
+.order-line { font-family: inherit; font-size: 14px; font-weight: 400; margin: 0; }
+.order-line span:last-child { color: var(--muted); font-size: 14px; }
+.grand-total { border-top: 1px solid var(--line); padding-top: 14px; margin: 12px 0 4px; }
+.order-details .badge { align-self: flex-start; margin-top: 12px; }
+.track-note { line-height: 1.5; margin-bottom: 24px; }
+.track-error { color: var(--red); margin: 32px 0; }
+
 /* ---- badges ---- */
 .badge {
   display: inline-block; padding: 3px 12px; border-radius: 999px;
   font-size: 12px; font-weight: 700; letter-spacing: 0.03em;
 }
 .badge.pending { background: rgba(255, 180, 84, 0.15); color: var(--accent); border: 1px solid rgba(255,180,84,0.3); }
+.badge.preparing { background: rgba(135, 180, 255, 0.12); color: #9bbfff; border: 1px solid rgba(135,180,255,0.3); }
+.badge.ready { background: rgba(126, 231, 135, 0.16); color: var(--green); border: 1px solid rgba(126,231,135,0.45); }
 .badge.paid { background: rgba(126, 231, 135, 0.12); color: var(--green); border: 1px solid rgba(126,231,135,0.3); }
 .badge.cancelled { background: rgba(255, 143, 163, 0.12); color: var(--red); border: 1px solid rgba(255,143,163,0.3); }
 
