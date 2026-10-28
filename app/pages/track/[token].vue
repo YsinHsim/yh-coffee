@@ -2,7 +2,7 @@
 interface Line { nameSnapshot: string; qty: number; priceCents: number }
 interface Order {
   orderNo: string; customerName: string; note: string; totalCents: number;
-  status: string; createdAt: string; lines: Line[];
+  status: string; paymentStatus: string; createdAt: string; lines: Line[];
 }
 const route = useRoute();
 const token = String(route.params.token);
@@ -12,7 +12,7 @@ const steps = [
   { key: "pending", title: "Order received", text: "Bayar kat kaunter. Kami dah terima order anda." },
   { key: "preparing", title: "Preparing your order", text: "Our barista is on it." },
   { key: "ready", title: "Ready to collect!", text: "Show your order number at the counter." },
-  { key: "paid", title: "Completed", text: "Thanks for ordering. Enjoy!" },
+  { key: "completed", title: "Completed", text: "Thanks for ordering. Enjoy!" },
 ];
 const current = computed(() => Math.max(0, steps.findIndex((s) => s.key === order.value?.status)));
 const step = computed(() => steps[current.value]!);
@@ -29,7 +29,7 @@ async function refresh() {
 onMounted(() => {
   refresh();
   const timer = setInterval(() => {
-    if (order.value?.status !== "paid" && order.value?.status !== "cancelled") refresh();
+    if (order.value?.status !== "completed" && order.value?.status !== "cancelled") refresh();
   }, 10000);
   onUnmounted(() => clearInterval(timer));
 });
@@ -48,6 +48,7 @@ useHead({ title: "YH Coffee — Track Order", meta: [{ name: "robots", content: 
       <template v-else>
         <h1>{{ step.title }}</h1>
         <p class="track-copy">{{ step.text }}</p>
+        <p class="muted">{{ order.paymentStatus === 'paid' ? 'Payment received. Thank you!' : 'Please pay at the counter.' }}</p>
         <div class="progress" aria-label="Order progress">
           <span v-for="(_, i) in 3" :key="i" :class="{ done: i <= Math.min(current, 2) }" />
         </div>

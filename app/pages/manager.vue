@@ -6,7 +6,7 @@ definePageMeta({ middleware: "staff-only" });
 interface OrderLine { nameSnapshot: string; qty: number; priceCents: number }
 interface Order {
   id: number; orderNo: string; customerName: string; note: string;
-  totalCents: number; status: string; paymentMethod: string | null; paidAt: string | null; lines: OrderLine[];
+  totalCents: number; status: string; paymentStatus: string; paymentMethod: string | null; paidAt: string | null; lines: OrderLine[];
 }
 interface Summary {
   today: { orders: number; revenue: number };
@@ -28,8 +28,8 @@ const updatingItem = ref<number | null>(null);
 const updatingShop = ref(false);
 const actionError = ref("");
 const rm = (c: number) => `RM${(c / 100).toFixed(2)}`;
-const activeOrders = computed(() => orders.value.filter((o) => o.status !== "paid" && o.status !== "cancelled"));
-const paidOrders = computed(() => orders.value.filter((o) => o.status === "paid"));
+const activeOrders = computed(() => orders.value.filter((o) => !["completed", "cancelled"].includes(o.status) || (o.paymentStatus === "unpaid" && o.status !== "cancelled")));
+const paidOrders = computed(() => orders.value.filter((o) => o.paymentStatus === "paid"));
 const paymentMethods = [{ value: "cash", label: "Cash" }, { value: "qr", label: "QR" }, { value: "card", label: "Card" }, { value: "other", label: "Other" }];
 const paymentChoice = ref<Record<number, string>>({});
 
@@ -56,15 +56,28 @@ onMounted(() => {
 });
 
 async function setStatus(order: Order, status: string) {
-  const paymentMethod = status === "paid" ? paymentChoice.value[order.id] ?? "cash" : undefined;
   updating.value = order.id;
   actionError.value = "";
   try {
-    await $fetch(`/api/manager/orders/${order.id}/status`, { method: "POST", body: { status, paymentMethod } });
+    await $fetch(`/api/manager/orders/${order.id}/status`, { method: "POST", body: { status } });
     await refresh();
   } catch (e: any) {
     actionError.value = e?.data?.statusMessage ?? "Could not update order. Please try again.";
     await refresh();
+  } finally {
+    updating.value = null;
+  }
+}
+async function recordPayment(order: Order) {
+  const paymentMethod = paymentChoice.value[order.id] ?? "cash";
+  if (!confirm(`Confirm ${paymentMethod.toUpperCase()} payment of ${rm(order.totalCents)} has been received?`)) return;
+  updating.value = order.id;
+  actionError.value = "";
+  try {
+    await $fetch(`/api/manager/orders/${order.id}/payment`, { method: "POST", body: { paymentMethod } });
+    await refresh();
+  } catch (e: any) {
+    actionError.value = e?.data?.statusMessage ?? "Could not record payment. Please try again.";
   } finally {
     updating.value = null;
   }
@@ -163,18 +176,21 @@ useHead({ title: "YH Coffee — Staff" });
         <p v-if="o.note" class="order-note"><b>Note:</b> {{ o.note }}</p>
         <div class="order-total"><span>Total</span><b>{{ rm(o.totalCents) }}</b></div>
         <div class="order-actions">
-          <label class="payment-choice">Payment
-            <select v-model="paymentChoice[o.id]" aria-label="Payment method">
-              <option v-for="method in paymentMethods" :key="method.value" :value="method.value">{{ method.label }}</option>
-            </select>
-          </label>
-          <NButton v-if="o.status === 'pending'" type="primary" block :loading="updating === o.id" @click="setStatus(o, 'preparing')">Start preparing →</NButton>
-          <NButton v-else-if="o.status === 'preparing'" type="primary" block :loading="updating === o.id" @click="setStatus(o, 'ready')">Ready for pickup ✓</NButton>
-          <NButton v-else type="primary" block :loading="updating === o.id" @click="setStatus(o, 'paid')">Complete & record payment ✓</NButton>
+          <template v-if="o.paymentStatus === 'unpaid'">
+            <label class="payment-choice">Payment received via
+              <select v-model="paymentChoice[o.id]" aria-label="Payment method">
+                <option v-for="method in paymentMethods" :key="method.value" :value="method.value">{{ method.label }}</option>
+              </select>
+            </label>
+            <NButton type="primary" block :loading="updating === o.id" @click="recordPayment(o)">Confirm payment received</NButton>
+          </template>
+          <p v-else class="staff-help"><b>Paid · {{ o.paymentMethod }}</b> · {{ rm(o.totalCents) }}</p>
+          <NButton v-if="o.status === 'pending'" block :loading="updating === o.id" @click="setStatus(o, 'preparing')">Start preparing →</NButton>
+          <NButton v-else-if="o.status === 'preparing'" block :loading="updating === o.id" @click="setStatus(o, 'ready')">Ready for pickup ✓</NButton>
+          <NButton v-else-if="o.status === 'ready'" type="primary" block :loading="updating === o.id" @click="setStatus(o, 'completed')">Collected · Complete ✓</NButton>
           <div class="secondary-actions">
-          <NButton v-if="o.status !== 'ready'" size="small" secondary @click="setStatus(o, 'paid')">Mark paid</NButton>
-          <NButton size="small" secondary tag="a" :href="`/receipt/${o.orderNo}`">Receipt</NButton>
-          <NButton size="small" secondary type="error" @click="setStatus(o, 'cancelled')">Cancel</NButton>
+            <NButton size="small" secondary tag="a" :href="`/receipt/${o.orderNo}`">Receipt</NButton>
+            <NButton v-if="o.paymentStatus === 'unpaid' && o.status !== 'completed'" size="small" secondary type="error" @click="setStatus(o, 'cancelled')">Cancel</NButton>
           </div>
         </div>
       </article>

@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
       note: schema.orders.note,
       totalCents: schema.orders.totalCents,
       status: schema.orders.status,
+      paymentStatus: schema.orders.paymentStatus,
       createdAt: schema.orders.createdAt,
       id: schema.orders.id,
     })

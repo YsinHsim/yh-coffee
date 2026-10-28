@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 
 export default defineEventHandler(async (event) => {
   await requireAuth(event, ["manager", "admin"]);
@@ -11,20 +11,17 @@ export default defineEventHandler(async (event) => {
     await tx.insert(schema.shop).values({ id: 1 }).onConflictDoNothing();
     const [state] = await tx.select().from(schema.shop).where(eq(schema.shop.id, 1)).for("update");
     if (!body.acceptingOrders && state!.acceptingOrders) {
-      const active = await tx
-        .select({ id: schema.orders.id })
-        .from(schema.orders)
-        .where(inArray(schema.orders.status, ["pending", "preparing", "ready"]))
-        .limit(1);
+      const active = await tx.select({ id: schema.orders.id }).from(schema.orders).where(or(
+        sql`${schema.orders.status} in ('pending', 'preparing', 'ready')`,
+        and(eq(schema.orders.paymentStatus, "unpaid"), sql`${schema.orders.status} <> 'cancelled'`),
+      )).limit(1);
       if (active.length)
-        throw createError({ statusCode: 409, statusMessage: "Complete or cancel all active orders before closing the store." });
+        throw createError({ statusCode: 409, statusMessage: "Complete and collect payment for every order, or cancel unpaid orders, before closing." });
     }
 
-    const [updated] = await tx
-      .update(schema.shop)
+    const [updated] = await tx.update(schema.shop)
       .set({ acceptingOrders: body.acceptingOrders, updatedAt: new Date() })
-      .where(eq(schema.shop.id, 1))
-      .returning();
+      .where(eq(schema.shop.id, 1)).returning();
     return { acceptingOrders: updated!.acceptingOrders };
   });
 });

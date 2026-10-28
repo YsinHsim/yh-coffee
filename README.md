@@ -31,7 +31,7 @@ Menu + order system for a single coffee shop. Customers order from a QR-scannabl
    Seed creates the `admin` user + a sample menu.
 4. **Run**: `npm run dev` → http://localhost:3000
 
-When upgrading an existing deployment with paid orders, run `npx tsx scripts/backfill-payments.ts` once after the schema push. It assigns legacy counter payments to `cash` and uses `createdAt` as their historical payment time.
+When upgrading an existing deployment, run `npx tsx scripts/backfill-payments.ts` and `npx tsx scripts/migrate-payment-status.ts` once after the schema push. They preserve legacy counter payments and convert the old combined `paid` status into `completed` fulfilment plus `paid` payment.
 
 With the dev server running, `npm run test:phase1` and `npm run test:phase2` smoke-test operational safety and daily payment reports against a local database. It creates and removes temporary staff/orders; never run it against production data. To use an isolated Neon development branch, explicitly set `ALLOW_REMOTE_PHASE1_TEST=true`.
 
@@ -64,12 +64,12 @@ The app must never collect raw card details itself. Smartphone and terminal orde
 
 ### Current implementation
 
-- Fulfilment flow: `pending → preparing → ready → paid`; `cancelled` is also supported.
-- `paid` currently represents a completed counter-paid order. Staff select cash, QR, card, or other; the server records `paidAt`. Paid orders cannot be changed through the fulfilment endpoint.
+- Fulfilment flow: `pending → preparing → ready → completed`; `cancelled` is also supported. Payment state is independent: `unpaid → paid`.
+- Staff explicitly confirm that cash, QR, card, or other counter payment was received. The server records `paidAt` and the staff actor, rejects duplicate payments, and allows paid orders to continue through fulfilment. Paid orders cannot be cancelled without a refund workflow.
 - The manager page lists active and recently completed orders, with controls to advance fulfilment and record payment.
 - Each new order gets an unguessable 192-bit tracking token. Its `/track/:token` link shows only that order and refreshes every 10 seconds. Predictable order numbers are never accepted as public tracking credentials.
 - The customer tracking page is optional for the shop. A future collection display can show order numbers without customer details.
-- Staff can open or close the store. Closing is blocked until all active orders are completed or cancelled; the public API also rejects new orders while closed.
+- Staff can open or close the store. Closing is blocked until all orders are completed and paid, or unpaid orders are cancelled; the public API also rejects new orders while closed.
 - Order creation runs in a database transaction with an atomic Malaysia-time daily counter, preventing duplicate order numbers and partial orders.
 - Staff status changes record the actor, previous status, new status, and timestamp. Only valid forward transitions are accepted.
 - The printable daily report uses `Asia/Kuala_Lumpur`, breaks down collections by payment method, counts paid/cancelled orders, and lists unfinished orders that block closing.
@@ -77,7 +77,7 @@ The app must never collect raw card details itself. Smartphone and terminal orde
 
 ### Future payment integration
 
-Before enabling smartphone or terminal checkout, add separate payment state (`unpaid`, `pending`, `paid`, `failed`) rather than overloading fulfilment state. Choose a provider, model its supported methods and fees, then verify webhook signatures and process callbacks idempotently. The physical terminal requires an API capable of linking its transaction to an order.
+Before enabling smartphone or terminal checkout, extend payment state with `pending` and `failed`. Choose a provider, model its supported methods and fees, then verify webhook signatures and process callbacks idempotently. The physical terminal requires an API capable of linking its transaction to an order. Selecting QR or card currently records an externally received payment; it does not charge or verify a transaction.
 
 ## Menu images
 

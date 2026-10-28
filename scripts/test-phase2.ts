@@ -27,13 +27,19 @@ try {
   assert(created.response.ok, "Could not create test order");
   const orders = await request("/api/manager/orders", undefined, cookie);
   const order = orders.data.find((o: any) => o.orderNo === created.data.orderNo);
-  let result = await request(`/api/manager/orders/${order.id}/status`, { status: "paid" }, cookie);
+  let result = await request(`/api/manager/orders/${order.id}/payment`, {}, cookie);
   assert(result.response.status === 400, "Payment was accepted without a method");
-  result = await request(`/api/manager/orders/${order.id}/status`, { status: "paid", paymentMethod: "qr" }, cookie);
-  assert(result.response.ok && result.data.paymentMethod === "qr" && result.data.paidAt, "Payment details were not saved");
+  result = await request(`/api/manager/orders/${order.id}/payment`, { paymentMethod: "qr" }, cookie);
+  assert(result.response.ok && result.data.paymentStatus === "paid" && result.data.paymentMethod === "qr" && result.data.paidAt, "Payment details were not saved");
+  result = await request(`/api/manager/orders/${order.id}/payment`, { paymentMethod: "cash" }, cookie);
+  assert(result.response.status === 409, "Duplicate payment was recorded");
   result = await request(`/api/manager/orders/${order.id}/status`, { status: "cancelled" }, cookie);
-  assert(result.response.status === 409, "Paid order was changed");
-  console.log("PASS payment requires a method, saves paidAt, and is immutable through status changes");
+  assert(result.response.status === 409, "Paid order was cancelled without a refund workflow");
+  for (const status of ["preparing", "ready", "completed"]) {
+    result = await request(`/api/manager/orders/${order.id}/status`, { status }, cookie);
+    assert(result.response.ok, `Paid order could not advance to ${status}`);
+  }
+  console.log("PASS payment is confirmed once and paid orders continue through fulfilment");
 
   const day = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kuala_Lumpur" }).format(new Date());
   const report = await request(`/api/manager/reports/daily?date=${day}`, undefined, cookie);

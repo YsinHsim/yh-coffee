@@ -25,7 +25,8 @@ export const orders = pgTable(
     customerName: text("customer_name").notNull().default(""),
     note: text("note").notNull().default(""),
     totalCents: integer("total_cents").notNull().default(0),
-    status: text("status").notNull().default("pending"), // pending | preparing | ready | paid | cancelled
+    status: text("status").notNull().default("pending"), // pending | preparing | ready | completed | cancelled
+    paymentStatus: text("payment_status").notNull().default("unpaid"), // unpaid | paid
     paymentMethod: text("payment_method"), // cash | qr | card | other
     paidAt: timestamp("paid_at", { withTimezone: true }),
     trackToken: text("track_token").notNull().unique(), // private customer tracking link

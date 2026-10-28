@@ -9,7 +9,7 @@ interface Report {
   cancelledOrders: number;
   collectedCents: number;
   payments: { method: string; orders: number; totalCents: number }[];
-  unresolved: { id: number; orderNo: string; customerName: string; status: string; totalCents: number }[];
+  unresolved: { id: number; orderNo: string; customerName: string; status: string; paymentStatus: string; totalCents: number }[];
   canClose: boolean;
 }
 const day = ref(new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kuala_Lumpur" }).format(new Date()));
@@ -68,7 +68,7 @@ useHead({ title: "YH Coffee — Daily closing" });
       <template v-else>
         <p class="staff-error">Resolve these orders before closing.</p>
         <div v-for="order in report.unresolved" :key="order.id" class="card">
-          <div><b>{{ order.orderNo }}</b><div class="muted">{{ order.customerName || "Counter customer" }} · {{ order.status }}</div></div>
+          <div><b>{{ order.orderNo }}</b><div class="muted">{{ order.customerName || "Counter customer" }} · {{ order.status }} · {{ order.paymentStatus }}</div></div>
           <b>{{ rm(order.totalCents) }}</b>
         </div>
       </template>

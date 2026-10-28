@@ -75,7 +75,7 @@ try {
   const testOrders = orders.data.filter((o: any) => o.customerName === marker);
   result = await request(`/api/manager/orders/${testOrders[0].id}/status`, post({ status: "cancelled" }), staffCookie);
   assert(result.response.ok, `Valid cancellation failed: ${JSON.stringify(result.data)}`);
-  result = await request(`/api/manager/orders/${testOrders[0].id}/status`, post({ status: "paid", paymentMethod: "cash" }), staffCookie);
+  result = await request(`/api/manager/orders/${testOrders[0].id}/status`, post({ status: "preparing" }), staffCookie);
   assert(result.response.status === 409, "Terminal order accepted a status reversal");
   for (const order of testOrders.slice(1))
     await request(`/api/manager/orders/${order.id}/status`, post({ status: "cancelled" }), staffCookie);
