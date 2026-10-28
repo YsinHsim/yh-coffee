@@ -1,6 +1,6 @@
 <script setup lang="ts">
 interface SessionUser { id: number; username: string; role: string }
-const { user } = useUserSession();
+const { user, fetch: fetchSession } = useUserSession();
 const sessionUser = computed(() => (user.value ?? null) as SessionUser | null);
 const username = ref("");
 const password = ref("");
@@ -12,6 +12,7 @@ async function login() {
   error.value = "";
   try {
     await $fetch("/api/auth/login", { method: "POST", body: { username: username.value, password: password.value } });
+    await fetchSession(); // refresh client session state from the new cookie
     await navigateTo(sessionUser.value?.role === "admin" ? "/admin" : "/manager");
   } catch (e: any) {
     error.value = e?.data?.statusMessage ?? "Login failed";
